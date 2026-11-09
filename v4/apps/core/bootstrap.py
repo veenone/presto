@@ -56,6 +56,12 @@ def load_seed_data(path: Path | None = None) -> bool:
             is_parallelizable=t.get("is_parallelizable", False),
             description=t.get("description"),
         )
+    # v3 schema 17 flags PR-fix templates by name; a fresh v3 install ends up with this.
+    for template in TaskTemplate.objects.all():
+        name = template.name.lower()
+        if "pr fix" in name or "pr validation" in name:
+            template.is_pr_fix = True
+            template.save(update_fields=["is_pr_fix"])
     for d in data.get("dut_types", []):
         DutType.objects.create(
             name=d["name"], category=d.get("category"),

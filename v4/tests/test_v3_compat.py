@@ -167,21 +167,22 @@ def test_fresh_v4_schema_matches_v3(v3_db):
 
 @pytest.mark.django_db
 def test_seed_matches_fresh_v3_install(tmp_path):
+    """Every column of every seeded row equals a fresh v3 install (ids and timestamps aside)."""
     fresh = tmp_path / "fresh.db"
     run([sys.executable, "-c", "from src.database.migrations import init_database; init_database()"],
         V3_DIR, fresh)
     bootstrap.load_seed_data()
     bootstrap.ensure_defaults()
-    queries = {
-        "features": "select name, category, complexity_weight, has_existing_tests from features order by id",
-        "task_templates": "select name, task_type, base_effort_hours, scales_with_dut, scales_with_profile,"
-                          " is_parallelizable, feature_id from task_templates order by id",
-        "dut_types": "select name, category, complexity_multiplier from dut_types order by id",
-        "test_profiles": "select name, effort_multiplier from test_profiles order by id",
-        "config": "select key, value from configuration where key != 'schema_version' order by key",
-        "users": "select username, display_name, email, role, auth_provider from users",
-    }
+    skip = {"id", "created_at", "updated_at", "password_hash", "last_login_at"}
     with sqlite3.connect(fresh) as c, connection.cursor() as cursor:
-        for name, sql in queries.items():
+        tables = [r[0] for r in c.execute(
+            "select name from sqlite_master where type='table' and name != 'sqlite_sequence' order by name")]
+        for table in tables:
+            cols = [r[1] for r in c.execute(f"pragma table_info({table})") if r[1] not in skip]
+            where = " where key != 'schema_version'" if table == "configuration" else ""
+            order = "key" if table == "configuration" else "rowid"
+            sql = f"select {', '.join(cols)} from {table}{where} order by {order}"
             cursor.execute(sql)
-            assert [tuple(r) for r in cursor.fetchall()] == [tuple(r) for r in c.execute(sql)], name
+            v4_rows = [tuple(r) for r in cursor.fetchall()]
+            v3_rows = [tuple(r) for r in c.execute(sql)]
+            assert v4_rows == v3_rows, table

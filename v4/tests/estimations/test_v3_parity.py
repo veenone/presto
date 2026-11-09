@@ -156,11 +156,6 @@ def _run_v3(tmp_path) -> dict:
 
 
 def _load_catalog() -> None:
-    # v3 flags PR templates in its v16->v17 migration; the v4 seed does not (yet).
-    from django.db.models import Q
-    TaskTemplate.objects.filter(Q(name__icontains="pr fix") | Q(name__icontains="pr validation")).update(
-        is_pr_fix=True,
-    )
     for f in CATALOG["features"]:
         Feature.objects.create(**f)
     for t in CATALOG["task_templates"]:
