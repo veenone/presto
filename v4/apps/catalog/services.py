@@ -161,7 +161,9 @@ def _set_feature_links(tmpl: TaskTemplate, fids: list[int], feature_hours: dict[
     _check_feature_ids(fids)
     TaskTemplateFeature.objects.filter(task_template=tmpl).delete()
     TaskTemplateFeature.objects.bulk_create([
-        TaskTemplateFeature(task_template=tmpl, feature_id=fid, base_hours_override=feature_hours.get(str(fid)))
+        TaskTemplateFeature(
+            task_template=tmpl, feature_id=fid, base_hours_override=feature_hours.get(str(fid)),
+        )
         for fid in dict.fromkeys(fids)
     ])
 
@@ -377,7 +379,8 @@ def update_dut_type(dut_id: int, updates: dict[str, Any]) -> DutType:
     if dut is None:
         raise ServiceError(404, "DUT type not found")
     new_name = updates.get("name")
-    if new_name and new_name != dut.name and DutType.objects.filter(name=new_name).exclude(pk=dut_id).exists():
+    clash = DutType.objects.filter(name=new_name).exclude(pk=dut_id)
+    if new_name and new_name != dut.name and clash.exists():
         raise ServiceError(409, f"DUT type with name '{new_name}' already exists")
     _apply(dut, updates)
     try:

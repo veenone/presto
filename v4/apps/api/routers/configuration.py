@@ -67,7 +67,7 @@ def list_configuration(request):
 
 
 @router.post("/configuration/logo/upload", response=LogoUploadOut, auth=role("ADMIN"))
-def upload_logo(request, file: UploadedFile = File(...)):
+def upload_logo(request, file: File[UploadedFile]):
     """Upload a logo image and update the logo_url configuration."""
     return call(services.save_logo, file.name, file.read())
 

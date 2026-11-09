@@ -29,7 +29,7 @@ def create_public_holiday(request, data: PublicHolidayCreate):
 
 
 @router.post("/public-holidays/import-ics", response=IcsImportOut, auth=role("ADMIN"))
-def import_holidays_ics(request, file: UploadedFile = File(...)):
+def import_holidays_ics(request, file: File[UploadedFile]):
     """Import public holidays from an ICS (iCalendar) file."""
     return services.import_ics(file.read())
 
