@@ -48,7 +48,8 @@ def reinit_request_inbox(request, data: RequestInboxReinit):
         request.auth, "REQUEST_INBOX_REINIT", resource_type="request",
         details={"deleted": deleted}, ip_address=client_ip(request),
     )
-    return {"deleted": deleted, "message": f"Request inbox cleared ({deleted} removed), ID counter reset to 1."}
+    message = f"Request inbox cleared ({deleted} removed), ID counter reset to 1."
+    return {"deleted": deleted, "message": message}
 
 
 @router.get("/requests/{request_id}", response=RequestOut)
@@ -74,7 +75,7 @@ def get_request_detail(request, request_id: int):
 
 
 @router.post("/requests/{request_id}/attachments", response=AttachmentUploadOut, auth=role("ESTIMATOR"))
-def upload_attachment(request, request_id: int, file: UploadedFile = File(...)):
+def upload_attachment(request, request_id: int, file: File[UploadedFile]):
     req = get_or_404(Request, request_id, NOT_FOUND)
     return services.save_attachment(req, file.name, file.read(), file.content_type)
 

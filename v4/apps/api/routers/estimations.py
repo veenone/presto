@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any
 
 from ninja import Router
 from ninja.errors import HttpError
@@ -28,10 +28,7 @@ from apps.estimations.models import Estimation
 
 router = Router(auth=authenticated, tags=["estimations"])
 
-T = TypeVar("T")
-
-
-def _call(fn: Callable[..., T], *args: Any, **kwargs: Any) -> T:
+def _call[T](fn: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     """Run a service function, mapping ``ServiceError`` to the v3 HTTP error."""
     try:
         return fn(*args, **kwargs)

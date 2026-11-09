@@ -352,7 +352,9 @@ class TestLogAction:
         log_action(alice.pk, "NO_DETAILS_ACTION")
         entry = AuditLog.objects.get(action="NO_DETAILS_ACTION")
         assert entry.details == {}
-        out = AuditLogOut.model_validate({"id": entry.pk, "action": entry.action, "details_json": entry.details})
+        out = AuditLogOut.model_validate(
+            {"id": entry.pk, "action": entry.action, "details_json": entry.details},
+        )
         assert out.details_json == "{}"
 
 

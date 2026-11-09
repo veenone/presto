@@ -1,3 +1,4 @@
+# ruff: noqa: E501  (HTML email bodies, copied from v3)
 """HTML email templates for notification events."""
 
 
