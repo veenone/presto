@@ -572,6 +572,8 @@ presto/
 
 ## 10. Data Migration Strategy
 
+> **Status (D7):** v3 has not been rolled out, so no production database exists yet. v4 will most likely be the first production release and start from a fresh database (`migrate` + `seed`). Both paths below stay implemented and tested (Phase 1 already covers Path A against a real v3 schema) so that any staging or pilot v3 data can still be carried over, but rehearsal on a production copy is no longer a release gate.
+
 Two supported paths; both tested in Phase 7.
 
 ### Path A — In-place adoption (default)
@@ -591,7 +593,7 @@ Pre-condition: the database must be at v3 schema version 24. Older databases mus
 
 ### Path B — Export / import (fallback)
 
-Use the existing `GET /api/admin/backup` JSON on v3, then `python manage.py restore_backup file.json` on a fresh v4 database. This is the path for MySQL installations whose column types differ from what Django expects.
+Use the existing `GET /api/admin/backup` JSON on v3, then `POST /api/admin/restore` (or a `restore_backup` command) on a fresh v4 database. This is the path for MySQL installations whose column types differ from what Django expects.
 
 ### Compatibility shims
 
@@ -651,7 +653,7 @@ Total target: ≥ 299 tests before Phase 8, with the parity checklist as the man
 - [ ] Coverage test: every v3 API path present or listed as changed; Redmine webhook works.
 - [ ] `pytest` ≥ 299 passing; Playwright suite green.
 - [ ] Worked example (README) reproduces 511.5 h, 73.1 person-days, 14.6 weeks, AT_RISK.
-- [ ] Upgrade rehearsal on a production DB copy: Path A succeeds, rollback to v3 image verified.
+- [ ] Data carry-over tested: Path A on a v3 schema 24 database and Path B with a v3 backup file (no production v3 database exists, decision D7).
 - [ ] Docker image runs with only port 8000; nginx serves UI and API on the same origin.
 - [ ] README, FEATURES, CHANGELOG, design document, SRS tech-stack section, screenshots updated.
 - [ ] `frontend_nicegui/`, `frontend_web/`, `frontend_desktop/`, IPC handler removed from `main`; preserved on `v3-maintenance`.
@@ -691,6 +693,7 @@ Parallelisation: Phases 3–4 can start once Phase 1 models exist, overlapping P
 | D2 | Which Django version? | **5.2 LTS** | Pinned `django>=5.2,<5.3` (§7 Phase 1) |
 | D4 | Ship Django admin? | **No.** All admin features live in the app | No `django.contrib.admin` (§4.9); admin parity in §5.4 |
 | D6 | Where is theme preference stored? | **Per user in the DB, browser as fallback** | `users.theme_preference` column (§4.8) |
+| D7 | Is there a production v3 database to migrate? | **No.** v3 is not rolled out yet | Production-copy rehearsal dropped as a gate; Path A/B kept for staging or pilot data (§10) |
 
 ### 16.2 Still open
 
@@ -707,7 +710,7 @@ Parallelisation: Phases 3–4 can start once Phase 1 models exist, overlapping P
 
 - `v3-maintenance` branch pushed; `v3.4.0` tag created locally (push blocked by the session's git proxy, owner to push).
 - Baseline in `docs/v3-baseline/`: OpenAPI snapshot (144 operations), 26 screenshots, 299 passing tests, 51 % coverage.
-- Still open: sanitised production database copy for the upgrade rehearsal.
+- Production database copy: not applicable, v3 has no production deployment (D7).
 
 ### Phase 1 — done (2026-11-09)
 
@@ -736,4 +739,4 @@ Deviations from the original plan:
 | v3 index names everywhere | 3 FK indexes use Django names | Django caps explicit index names at 30 characters |
 | `sync_redmine` in Phase 1 | Phase 2 | Needs the ported Redmine adapter |
 
-Not yet verified: adoption of a MySQL database (no MySQL instance in this environment) and of a real production database copy.
+Not yet verified: adoption of a MySQL database (no MySQL instance in this environment). A production copy does not exist (D7).
