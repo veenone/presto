@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.estimations",
     "apps.integrations",
     "apps.notifications",
+    "apps.api",
 ]
 
 MIDDLEWARE = [
@@ -95,7 +96,11 @@ USE_I18N = False
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
-MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT") or BASE_DIR / "data" / "uploads")
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT") or BASE_DIR / "data")
+# Branding uploads (logo), served at /api/static/uploads/ as in v3.
+UPLOADS_DIR = Path(os.environ.get("UPLOADS_DIR") or MEDIA_ROOT / "uploads")
+# Request attachments: <ATTACHMENTS_DIR>/<request number>/<file>, as in v3.
+ATTACHMENTS_DIR = Path(os.environ.get("ATTACHMENTS_DIR") or MEDIA_ROOT / "attachments")
 
 # Seed data shared with v3 until v4 replaces it at the repo root.
 SEED_DATA_PATH = Path(os.environ.get("SEED_DATA_PATH") or REPO_DIR / "data" / "seed_data.json")
