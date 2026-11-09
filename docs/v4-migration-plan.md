@@ -1,6 +1,6 @@
 # PRESTO v4 — Migration Plan: Django + HTMX + Alpine.js
 
-**Status:** Planning draft (rev. 2: open decisions D1, D2, D4, D6 resolved)
+**Status:** In progress (rev. 3: Phase 0 and Phase 1 complete, see §17)
 **Date:** 2026-11-09
 **Baseline:** v3.4.0 (FastAPI + SQLAlchemy backend, NiceGUI / Streamlit / C# WinForms frontends)
 
@@ -57,7 +57,7 @@
 | Area | Location | Size | Notes |
 |------|----------|------|-------|
 | REST API | `backend/src/api/routes.py` | 4,784 lines, **138 router endpoints** (+ 2 unauthenticated app-level: healthcheck, host-config) in one file | Single `APIRouter`; Pydantic schemas in `schemas.py` (801 lines) |
-| ORM models | `backend/src/database/models.py`, `auth/models.py` | **24 tables** | SQLAlchemy 2.0 declarative; JSON stored as text columns |
+| ORM models | `backend/src/database/models.py`, `auth/models.py` | **25 tables** | SQLAlchemy 2.0 declarative; JSON stored as text columns |
 | Migrations | `backend/src/database/migrations.py` | Hand-written, `SCHEMA_VERSION = 24` | Version stored in `configuration` table; `_ensure_config_keys()` seeds config defaults |
 | Estimation engine | `backend/src/engine/` | 4 modules, pure dataclasses | No DB imports — portable as-is |
 | Auth | `backend/src/auth/` | JWT (PyJWT + bcrypt), LDAP (ldap3), OIDC (authlib) | RBAC matrix stored as JSON in `configuration.rbac_matrix`; 18 permission keys; 4 roles |
@@ -129,7 +129,7 @@ These rely on NiceGUI's persistent WebSocket and server-side Python state. Each 
 │  apps/catalog/      Feature, TaskTemplate, Preset, DUT, Profile, │
 │                     DocumentType, RiskItem, PublicHoliday        │
 │  apps/estimations/  Estimation, tasks, versions, wizard views    │
-│  apps/requests/     Request inbox, attachments, assignment       │
+│  apps/inbox/        Request inbox, attachments, assignment       │
 │  apps/teams/        Team, TeamMember, allocation                 │
 │  apps/integrations/ adapters, sync, webhooks, scheduler cmd      │
 │  apps/reports/      xlsx/docx/pdf/trend/comparison/exec summary  │
@@ -162,7 +162,7 @@ Scheduler (optional container) ── `manage.py sync_redmine --loop`
 
 ### 4.1 ORM: Django ORM, not SQLAlchemy inside Django
 
-**Decision:** Port all 24 tables to Django models. Keep identical table names and column names via `Meta.db_table` and explicit `db_column` where needed, so an existing v3 database can be adopted with `migrate --fake-initial`.
+**Decision:** Port all 25 tables to Django models. Keep identical table names and column names via `Meta.db_table` and explicit `db_column` where needed, so an existing v3 database can be adopted with `migrate --fake-initial`.
 
 **Why:** Mixing SQLAlchemy into Django forfeits the admin, forms, auth integration, migrations, and test fixtures that justify Django in the first place.
 
@@ -173,7 +173,7 @@ Scheduler (optional container) ── `manage.py sync_redmine --loop`
 ### 4.2 Auth: Django sessions for web, JWT for `/api/*`
 
 - **Web UI**: `django.contrib.auth` with a custom `User` model (`AUTH_USER_MODEL = "accounts.User"`) mapping the existing `users` table (`username`, `email`, `display_name`, `password_hash` → `password`, `auth_provider`, `external_id`, `role`, `is_active`, `team_member_id`, `last_login_at`). Session cookie, CSRF on, HTMX sends the token via `hx-headers` in `base.html`.
-- **Password hashes**: existing hashes are bcrypt. Enable `BCryptSHA256PasswordHasher` and a custom `LegacyBcryptHasher` that verifies v3 hashes and upgrades them on login.
+- **Password hashes**: v4 keeps the v3 format (a raw bcrypt string in `password_hash`). `User.set_password` / `check_password` use bcrypt directly, so v3 and v4 verify the same hashes and a rollback never locks users out.
 - **API**: keep `POST /api/auth/login` returning access + refresh JWT with the same claims and expiry, signed with the same `jwt_secret` config key. Refresh tokens persist in `user_sessions` as today. With the desktop app retired, the API's only consumers are integrations and future automation, so this is kept for feature parity rather than client compatibility.
 - **LDAP / OIDC**: port `LDAPProvider` and `OIDCProvider` as Django authentication backends. Group→role mapping, "preserve admin-assigned role" rule, LDAP sync and reset-synced-users commands all move 1:1.
 - **RBAC**: single source of truth in `accounts/permissions.py` (the 18 keys). Enforced by a `@require_permission("manage_duts")` view decorator, a `{% if perms_has "manage_duts" %}` template tag for nav/buttons, and the same check in `apps/api`.
@@ -347,7 +347,7 @@ Phase 8  Cleanup & release
 | Phase | Deliverable | Exit criteria |
 |-------|-------------|---------------|
 | 0 | `v3-maintenance` branch, v3 OpenAPI snapshot, screenshot baseline, this plan approved | Snapshots committed under `docs/v3-baseline/` |
-| 1 | Django project, 24 models, initial migration, `seed` + `create_admin` commands, engine moved | `migrate` on a copy of a production DB succeeds with `--fake-initial`; model tests green |
+| 1 | Django project, 25 models, initial migration, `seed` + `create_admin` commands, engine moved | `migrate` on a copy of a production DB succeeds with `--fake-initial`; model tests green |
 | 2 | `/api/*` on django-ninja, JWT auth, RBAC, all 140 endpoints | Coverage test passes; 299 ported backend tests green; Redmine webhook verified |
 | 3 | `base.html`, sidebar, login (local/LDAP/OIDC), theme, bell, error pages | Login → dashboard placeholder works in both themes |
 | 4 | All catalog + admin pages (§5.2, §5.4 except dashboard) | Page-by-page parity checklist signed |
@@ -403,7 +403,7 @@ Each step lists the command or file to touch. Work on branch `v4/<phase>-<topic>
    Any `OperationalError` here means a column mismatch; fix the model, not the DB.
 5. Move `backend/src/engine/` to `v4/engine/` unchanged. Move `backend/tests/test_calculator.py`, `test_feasibility.py`, `test_calibration.py`, `test_allocator.py` and run them: they need no Django.
 6. Write `core/config.py`: typed getters (`get_str`, `get_float`, `get_bool`, `get_json`, `get_list`) plus `ensure_defaults()` seeded from the union of v3 `_migrate_v1_to_v2` and `_ensure_config_keys()`.
-7. Management commands: `seed` (port `_load_seed_data`), `create_admin` (port `scripts/create_admin.py`), `sync_redmine --loop`.
+7. Management commands: `seed` (port `_load_seed_data`), `ensure_defaults`, `create_admin` (port `scripts/create_admin.py`), `check_v3_compat`. `sync_redmine --loop` moves to Phase 2, where the integration adapters are ported.
 
 ### Phase 2 — REST API parity
 
@@ -484,9 +484,9 @@ presto/
 ├── apps/
 │   ├── core/            models(Configuration), config.py, dashboard views, branding, management/commands/{seed,ensure_defaults,create_admin}
 │   ├── accounts/        User, UserSession, AuditLog, permissions.py, backends/{ldap,oidc}.py, views (login, oidc, password), rbac views
-│   ├── catalog/         Feature, TaskTemplate, TaskTemplateFeature, FeaturePreset, TaskPreset, DutType, TestProfile, DocumentType, RiskItem, PublicHoliday, HistoricalProject
-│   ├── estimations/     Estimation, EstimationTask, EstimationRisk, EstimationTeamAllocation, EstimationVersionSnapshot; services.py; wizard/ views
-│   ├── requests/        Request, attachments, views
+│   ├── catalog/         Feature, TaskTemplate, TaskTemplateFeature, FeaturePreset, TaskPreset, DutType, TestProfile, DocumentType, RiskItem, PublicHoliday
+│   ├── estimations/     Estimation, EstimationTask, EstimationRisk, EstimationTeamAllocation, EstimationVersionSnapshot, HistoricalProject; services.py; wizard/ views
+│   ├── inbox/           Request, attachments, views
 │   ├── teams/           Team, TeamMember, presets
 │   ├── integrations/    IntegrationConfig, adapters/ (5), service.py, webhooks.py, management/commands/sync_redmine.py
 │   ├── reports/         excel.py word.py pdf.py trend.py comparison.py executive.py, views (downloads)
@@ -595,7 +595,7 @@ Use the existing `GET /api/admin/backup` JSON on v3, then `python manage.py rest
 
 ### Compatibility shims
 
-- `password_hash` → Django `password` field via `db_column="password_hash"` and the legacy bcrypt hasher (`bcrypt$<hash>` prefix added on first successful login).
+- `password_hash` → Django `password` field via `db_column="password_hash"`, still stored as raw bcrypt (no format change).
 - `configuration.schema_version` row is kept and set to `"django"` after adoption so a v3 binary refuses to start on a v4 database.
 - `user_sessions.refresh_token` remains the refresh store for the API.
 
@@ -698,3 +698,42 @@ Parallelisation: Phases 3–4 can start once Phase 1 models exist, overlapping P
 |---|----------|-----------|------------------------|
 | D3 | Keep direct TLS in uvicorn, or terminate only at nginx? | Phase 7 | Keep both, as v3 does |
 | D5 | Streamlit and desktop retirement: who needs notice? | Phase 7 | Announce at Phase 7 staging |
+
+---
+
+## 17. Progress Log
+
+### Phase 0 — done (2026-11-09)
+
+- `v3-maintenance` branch pushed; `v3.4.0` tag created locally (push blocked by the session's git proxy, owner to push).
+- Baseline in `docs/v3-baseline/`: OpenAPI snapshot (144 operations), 26 screenshots, 299 passing tests, 51 % coverage.
+- Still open: sanitised production database copy for the upgrade rehearsal.
+
+### Phase 1 — done (2026-11-09)
+
+Delivered in `v4/` (see `v4/README.md`):
+
+- Django 5.2 LTS project, 8 apps, 25 models mapped 1:1 onto the v3 tables and columns.
+- Initial migrations adopt a v3 database with `migrate --fake-initial`; the v4-only `users.theme_preference` column is a separate, real migration.
+- Commands: `seed`, `ensure_defaults`, `create_admin`, `check_v3_compat`.
+- Typed configuration accessor (`apps.core.config`) and the 61 v3 default keys in `apps/core/config_defaults.json`.
+- Engine moved verbatim; its 55 tests pass unchanged.
+- 81 tests in total, including tests that build a real v3 database with the v3 code and then:
+  - adopt it and read every sample row back through Django;
+  - restart v3 on the adopted database and verify a password changed by v4;
+  - compare a fresh v4 schema with a fresh v3 schema (tables, columns, NOT NULL rules);
+  - compare a fresh v4 seed with a fresh v3 install, row by row.
+- Adoption rehearsed on the Phase 0 sample database (estimation created through the v3 API).
+
+Deviations from the original plan:
+
+| Plan said | Done instead | Why |
+|-----------|--------------|-----|
+| 24 tables | 25 tables | Actual count in a v3 schema 24 database |
+| `apps/requests` | `apps/inbox` | Avoids confusion with the `requests` HTTP library |
+| Legacy bcrypt hasher with upgrade on login | Raw bcrypt kept | v3 and v4 share hashes; rollback stays safe |
+| `HistoricalProject` in `catalog` | In `estimations` | Avoids a circular dependency between app migrations |
+| v3 index names everywhere | 3 FK indexes use Django names | Django caps explicit index names at 30 characters |
+| `sync_redmine` in Phase 1 | Phase 2 | Needs the ported Redmine adapter |
+
+Not yet verified: adoption of a MySQL database (no MySQL instance in this environment) and of a real production database copy.
