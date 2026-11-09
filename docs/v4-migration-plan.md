@@ -1,6 +1,6 @@
 # PRESTO v4 — Migration Plan: Django + HTMX + Alpine.js
 
-**Status:** Planning draft
+**Status:** Planning draft (rev. 2: open decisions D1, D2, D4, D6 resolved)
 **Date:** 2026-11-09
 **Baseline:** v3.4.0 (FastAPI + SQLAlchemy backend, NiceGUI / Streamlit / C# WinForms frontends)
 
@@ -23,7 +23,7 @@
 13. [Risks and Mitigations](#13-risks-and-mitigations)
 14. [Definition of Done](#14-definition-of-done)
 15. [Timeline Estimate](#15-timeline-estimate)
-16. [Open Decisions](#16-open-decisions)
+16. [Decisions](#16-decisions)
 
 ---
 
@@ -37,13 +37,14 @@
 | G2 | **Django as the single backend** | One process serves pages, REST API, auth, reports, integrations |
 | G3 | **HTMX + Alpine.js frontend** | Server-rendered templates, partial swaps for interactivity, Alpine for local client state; no SPA build step |
 | G4 | **Zero data loss on upgrade** | Existing SQLite/MySQL databases upgrade in place or via a one-shot import command |
-| G5 | **REST API stays compatible** | Desktop C# client and existing integrations (Redmine webhook) keep working with the same `/api/*` contract |
-| G6 | **Simpler runtime** | One web process + one optional worker, instead of three co-running frontends |
+| G5 | **REST API kept as a feature** | `/api/*` with OpenAPI docs stays available for integrations (Redmine webhook) and future automation. No desktop client depends on it, so endpoint shapes may be cleaned up where it simplifies the port |
+| G6 | **Simpler runtime** | One Docker-based web service + one optional scheduler, instead of three co-running frontends and a desktop client |
+| G7 | **All administration inside the app** | Every admin task is done from PRESTO's own pages; Django admin is not installed |
 
 ### Non-Goals
 
 - Redesigning the estimation formula, feasibility rules, or report content. The `engine/` package is moved, not rewritten.
-- Rewriting the C# desktop app. It keeps consuming the REST API.
+- Keeping the C# desktop app. It is retired; the Docker-hosted web app replaces it (decision D1).
 - Adding new features beyond parity. New work queues for v4.1+.
 - Introducing a JavaScript build pipeline (Node, bundlers, React/Vue). HTMX and Alpine load from vendored static files.
 
@@ -64,10 +65,10 @@
 | Reports | `backend/src/reports/` | Excel, Word, PDF, comparison, trend, executive summary | openpyxl / python-docx / ReportLab / matplotlib |
 | Notifications | `backend/src/notifications/` | SMTP + HTML templates; in-app `webhook_notifications` table | Bell icon polls `/notifications/unread-count` every 30 s |
 | Imports | `backend/src/imports/` | CSV/Excel preview + execute per entity type | |
-| Desktop IPC | `backend/src/cli/ipc_handler.py` | 1,698 lines, 58 commands | Legacy; the C# app now calls `/api/*` over HTTP (`BackendApiService.cs`) |
+| Desktop IPC | `backend/src/cli/ipc_handler.py` | 1,698 lines, 58 commands | Legacy; removed in v4 together with the desktop app |
 | NiceGUI frontend | `frontend_nicegui/` | ~17,500 lines, 25 routed pages | `estimation.py` alone is 4,959 lines (wizard + detail + edit) |
 | Streamlit frontend | `frontend_web/` | ~7,500 lines, 13 pages | Lags behind NiceGUI on features (no presets, risks, holidays, backup…) |
-| Desktop frontend | `frontend_desktop/` | C# WinForms .NET 8 | REST client; stays |
+| Desktop frontend | `frontend_desktop/` | C# WinForms .NET 8 | Retired in v4 (D1); kept only on `v3-maintenance` |
 | Tests | `backend/tests/` | **299 test functions**, 11 modules | pytest, FastAPI `TestClient`, temp SQLite per test |
 
 ### 2.2 Routed pages today (NiceGUI, the reference UI)
@@ -91,7 +92,7 @@ These rely on NiceGUI's persistent WebSocket and server-side Python state. Each 
 | Notification bell badge | sidebar | `ui.timer(30s)` polling | `hx-get` with `hx-trigger="every 30s"` on a tiny partial |
 | Jira PR import dialog | wizard step 5 | NiceGUI dialog + table | HTMX-loaded modal partial; Alpine for row selection |
 | ECharts dashboard | `/` | `ui.echart` | Vendored ECharts, initialised by Alpine on `htmx:afterSettle`; data via JSON script tag |
-| Dark/light theme | global | `app.storage.user` | Alpine store + `localStorage` + `data-theme` attribute; server default from user preference |
+| Dark/light theme | global | `app.storage.user` | Stored per user in the DB (`users.theme_preference`); `localStorage` as fallback before login or if unset; applied via `data-theme` |
 | Per-tab auth state | global | `app.storage.user` cookie | Django session (HttpOnly cookie) for web; JWT kept for `/api/*` |
 | Multi-select bulk edit (DUTs, users) | tables | Quasar table selection | Alpine `x-data` holding selected IDs; `hx-include` on bulk action buttons |
 | File download with feedback | reports | `ui.run_javascript` | Plain `<a download>` to report view; Alpine spinner on `htmx:beforeRequest` for async variants |
@@ -120,7 +121,7 @@ These rely on NiceGUI's persistent WebSocket and server-side Python state. Each 
 └──────────────────────────────┬──────────────────────────────────┘
                                │ HTTP (full pages + HTML partials)
 ┌──────────────────────────────▼──────────────────────────────────┐
-│ Django 5.x (ASGI via uvicorn/gunicorn)                          │
+│ Django 5.2 LTS (ASGI via uvicorn), Docker service               │
 │                                                                  │
 │  presto/            project settings, urls, asgi                 │
 │  apps/core/         Configuration, branding, dashboard           │
@@ -143,7 +144,7 @@ These rely on NiceGUI's persistent WebSocket and server-side Python state. Each 
 │ SQLite (default)  /  MySQL (DB_URL)                             │
 └─────────────────────────────────────────────────────────────────┘
 
-Desktop C# WinForms ───── HTTP /api/* (JWT) ─────▶ apps/api
+Automation / scripts ──── HTTP /api/* (JWT) ─────▶ apps/api
 Redmine webhook ───────── POST /api/webhooks/redmine ─▶ apps/api
 Scheduler (optional container) ── `manage.py sync_redmine --loop`
 ```
@@ -173,7 +174,7 @@ Scheduler (optional container) ── `manage.py sync_redmine --loop`
 
 - **Web UI**: `django.contrib.auth` with a custom `User` model (`AUTH_USER_MODEL = "accounts.User"`) mapping the existing `users` table (`username`, `email`, `display_name`, `password_hash` → `password`, `auth_provider`, `external_id`, `role`, `is_active`, `team_member_id`, `last_login_at`). Session cookie, CSRF on, HTMX sends the token via `hx-headers` in `base.html`.
 - **Password hashes**: existing hashes are bcrypt. Enable `BCryptSHA256PasswordHasher` and a custom `LegacyBcryptHasher` that verifies v3 hashes and upgrades them on login.
-- **API**: keep `POST /api/auth/login` returning access + refresh JWT with the same claims and expiry, signed with the same `jwt_secret` config key. Refresh tokens persist in `user_sessions` as today. This keeps the C# desktop client unchanged.
+- **API**: keep `POST /api/auth/login` returning access + refresh JWT with the same claims and expiry, signed with the same `jwt_secret` config key. Refresh tokens persist in `user_sessions` as today. With the desktop app retired, the API's only consumers are integrations and future automation, so this is kept for feature parity rather than client compatibility.
 - **LDAP / OIDC**: port `LDAPProvider` and `OIDCProvider` as Django authentication backends. Group→role mapping, "preserve admin-assigned role" rule, LDAP sync and reset-synced-users commands all move 1:1.
 - **RBAC**: single source of truth in `accounts/permissions.py` (the 18 keys). Enforced by a `@require_permission("manage_duts")` view decorator, a `{% if perms_has "manage_duts" %}` template tag for nav/buttons, and the same check in `apps/api`.
 
@@ -183,11 +184,13 @@ Scheduler (optional container) ── `manage.py sync_redmine --loop`
 
 **Why:** It is Pydantic-based, so the 801 lines of existing schemas port with minimal edits, and it generates the same OpenAPI docs at `/docs`. DRF would force a rewrite of every schema into serializers.
 
-**Contract rule:** Every v3 endpoint keeps its path, method, request body, response shape and status codes. A contract test suite (§11) diffs the v3 OpenAPI document against v4.
+**Coverage rule:** Every v3 endpoint has a v4 equivalent with the same capability. Paths stay the same by default; a path or shape may change only if it is listed in the CHANGELOG. The Redmine webhook path and token check must not change. A coverage test (§11) diffs v3 and v4 OpenAPI documents and fails on any unlisted removal.
+
+**Priority:** the HTMX UI calls services directly, not the API. The API is therefore off the critical path and can be finished in parallel with the UI phases.
 
 ### 4.4 Views: thin views, fat services
 
-Business logic that currently lives inline in `routes.py` (estimation create/revise/status, feature promotion, import, backup/restore, dashboard stats) moves into `apps/<app>/services.py`. Both the HTML views and the API views call the same service functions. This is what guarantees web and desktop behave identically.
+Business logic that currently lives inline in `routes.py` (estimation create/revise/status, feature promotion, import, backup/restore, dashboard stats) moves into `apps/<app>/services.py`. Both the HTML views and the API views call the same service functions. This guarantees the web UI and the API behave identically.
 
 ### 4.5 Frontend stack
 
@@ -196,6 +199,7 @@ Business logic that currently lives inline in `routes.py` (estimation create/rev
 | Markup | Django templates with `django-template-partials` for inline partial blocks |
 | Interactivity | htmx 2.x (`hx-boost` on the sidebar for SPA-like navigation) |
 | Client state | Alpine.js 3.x: stores for theme and selection, `x-data` per component |
+| Admin | No `django.contrib.admin`. Users, RBAC, settings, integrations, audit, backup/restore and LDAP tools are all in-app pages (D4) |
 | Styling | Hand-written CSS with custom properties (port the existing `ed-*` design tokens), no Tailwind build. Optional: Tailwind via CDN Play is rejected for production. |
 | Icons | Material Symbols font (same icon names as today) |
 | Charts | ECharts (vendored), configured from JSON emitted by the view |
@@ -212,10 +216,21 @@ Redmine polling is the only background job. Options, in order of preference:
 
 Decision: option 1 for v4.0.
 
-### 4.7 Streamlit and the IPC handler
+### 4.7 Streamlit, desktop app and the IPC handler
 
 - `frontend_web/` (Streamlit) and `frontend_nicegui/` are **removed** in v4 once parity is signed off. They are kept on the `v3-maintenance` branch.
-- `backend/src/cli/ipc_handler.py` is **removed**. The desktop app has already moved to HTTP; the IPC file is dead weight. Confirm no deployment still launches the desktop app in IPC mode before deleting (see §16).
+- `frontend_desktop/` (C# WinForms) and `backend/src/cli/ipc_handler.py` are **removed** (D1). Users move to the Docker-hosted web app. Both stay on `v3-maintenance`.
+
+### 4.8 Theme preference (D6)
+
+- New column `users.theme_preference` (`light` | `dark` | `NULL`), added by a v4-only migration.
+- Resolution order: user DB value → browser `localStorage` → system `prefers-color-scheme` → dark (v3 default).
+- The toggle writes `localStorage` immediately and sends `hx-post /me/theme` to persist. The server renders `data-theme` from the DB value, so there is no flash after login.
+
+### 4.9 No Django admin (D4)
+
+- `django.contrib.admin` is not in `INSTALLED_APPS`; no `/admin/` URL is mounted.
+- Any admin task found during the port that has no in-app page gets one. Recovery tasks with no UI (create or reset the admin account, restore a backup) are management commands run with `docker compose exec app python manage.py …`.
 
 ---
 
@@ -295,7 +310,7 @@ Legend: **Keep** = move as is; **Port** = re-implement in Django/HTMX; **Replace
 | Change password | Port |
 | Notifications: bell, unread count, list, mark read / all read, test email | Port |
 | Dashboard: stats cards, ECharts donut/bar for estimations, requests, features, tasks, risks; recent tables | Port |
-| Light / dark theme, persistent | Replace (Alpine + localStorage + user preference) |
+| Light / dark theme, persistent | Replace: per-user DB preference, browser fallback (§4.8) |
 | Error pages 400/401/403/404/422/5xx with Pydantic detail parsing | Port (HTMX `responseError` banner + full-page templates) |
 | Build version in sidebar footer (`APP_VERSION`) | Port |
 | Healthcheck, host-config (unauthenticated) | Keep |
@@ -310,6 +325,7 @@ Legend: **Keep** = move as is; **Port** = re-implement in Django/HTMX; **Replace
 | Uploaded files under `data/uploads` | Keep (`MEDIA_ROOT`) |
 | Docker image, compose, nginx, Jenkins pipeline | Port (§12) |
 | Seed data and default admin on first run | Keep (`manage.py seed`) |
+| C# desktop client | Retired (D1) |
 
 ---
 
@@ -332,13 +348,13 @@ Phase 8  Cleanup & release
 |-------|-------------|---------------|
 | 0 | `v3-maintenance` branch, v3 OpenAPI snapshot, screenshot baseline, this plan approved | Snapshots committed under `docs/v3-baseline/` |
 | 1 | Django project, 24 models, initial migration, `seed` + `create_admin` commands, engine moved | `migrate` on a copy of a production DB succeeds with `--fake-initial`; model tests green |
-| 2 | `/api/*` on django-ninja, JWT auth, RBAC, all 140 endpoints | Contract test passes; 299 ported backend tests green; desktop app smoke-tested |
+| 2 | `/api/*` on django-ninja, JWT auth, RBAC, all 140 endpoints | Coverage test passes; 299 ported backend tests green; Redmine webhook verified |
 | 3 | `base.html`, sidebar, login (local/LDAP/OIDC), theme, bell, error pages | Login → dashboard placeholder works in both themes |
 | 4 | All catalog + admin pages (§5.2, §5.4 except dashboard) | Page-by-page parity checklist signed |
 | 5 | Wizard new/edit/detail/list, reports download, exports | Worked example from README reproduces 511.5 h / AT_RISK |
 | 6 | Requests, dashboard charts, integrations page, notifications | Parity checklist signed |
 | 7 | Upgrade path for existing DBs, compose/Jenkins, nginx, docs | Staging deployed from CI; rollback rehearsed |
-| 8 | Remove NiceGUI/Streamlit/IPC, bump 4.0.0, CHANGELOG, README, screenshots | Release tag |
+| 8 | Remove NiceGUI/Streamlit/desktop/IPC, bump 4.0.0, CHANGELOG, README, screenshots | Release tag |
 
 ---
 
@@ -364,7 +380,7 @@ Each step lists the command or file to touch. Work on branch `v4/<phase>-<topic>
    ```bash
    mkdir v4 && cd v4
    python -m venv .venv && . .venv/bin/activate
-   pip install "django>=5.1" django-ninja dj-database-url django-cors-headers \
+   pip install "django>=5.2,<5.3" django-ninja dj-database-url django-cors-headers \
                django-template-partials django-filter PyJWT bcrypt ldap3 authlib \
                python-docx openpyxl reportlab matplotlib requests pytest-django
    django-admin startproject presto .
@@ -396,8 +412,9 @@ Each step lists the command or file to touch. Work on branch `v4/<phase>-<topic>
 3. Split the v3 `routes.py` into routers by domain: `auth`, `users`, `catalog`, `estimations`, `requests`, `teams`, `configuration`, `integrations`, `notifications`, `reports`, `dashboard`, `admin`. Mount all under `/api` with `NinjaAPI(docs_url="/docs")`.
 4. For each endpoint: move the body into `apps/<app>/services.py`, leave the router function as parse → call service → serialise.
 5. Port `test_api.py`, `test_phase6_api.py`, `test_auth.py`, `test_integrations.py`, `test_models.py`, `test_reports.py` to `pytest-django`. Replace `TestClient` with `django.test.Client` or ninja's `TestClient`.
-6. Contract test: load `docs/v3-baseline/openapi-v3.json`, compare paths × methods against live `/api/openapi.json`; fail on any missing route.
-7. Smoke-test the C# desktop app against the v4 API (`BackendUrl` → v4 port).
+6. Coverage test: load `docs/v3-baseline/openapi-v3.json`, compare paths × methods against live `/api/openapi.json`; fail on any removal not listed in the CHANGELOG.
+7. Verify the Redmine webhook end to end against a test Redmine (token check, sync result).
+8. This phase runs in parallel with Phases 3 to 6; it does not block the UI.
 
 ### Phase 3 — UI shell and auth
 
@@ -405,7 +422,7 @@ Each step lists the command or file to touch. Work on branch `v4/<phase>-<topic>
 2. Port the `ed-*` CSS tokens from `frontend_nicegui/app.py` (lines 49–420) into `static/css/app.css` with light/dark variable sets.
 3. `templates/partials/_sidebar.html`: sections and items from `app.py` lines 1480–1514, gated by `{% has_perm %}` tag; logo from branding config; version footer.
 4. `accounts/views.py`: login (local → LDAP fallback as today), OIDC start/callback, logout, change password. Login page design from `app.py` lines 901–1190.
-5. Theme: Alpine store `theme` persisted in `localStorage`; server renders the user's last choice from a `ui_theme` config/user field to avoid flash.
+5. Theme (§4.8): migration adding `users.theme_preference`; `POST /me/theme` view; Alpine store reads DB value from `data-theme`, falls back to `localStorage`, then `prefers-color-scheme`.
 6. Notification bell partial: `hx-get="/notifications/badge" hx-trigger="load, every 30s"`; dropdown via `hx-get="/notifications/list"`.
 7. Error handling: `templates/errors/{400,401,403,404,422,500}.html`; HTMX `responseError` listener shows the banner partial with parsed detail.
 
@@ -447,7 +464,7 @@ Implement with one reusable "CRUD page" pattern (list partial + modal form parti
 
 ### Phase 8 — Cleanup and release
 
-1. Delete `frontend_nicegui/`, `frontend_web/`, `.streamlit/`, `backend/src/cli/ipc_handler.py`, `_check_admin.py`; move `v4/` contents to repo root (`presto/`, `apps/`, `engine/`, `templates/`, `static/`).
+1. Delete `frontend_nicegui/`, `frontend_web/`, `.streamlit/`, `frontend_desktop/`, `backend/src/cli/ipc_handler.py`, `_check_admin.py`; move `v4/` contents to repo root (`presto/`, `apps/`, `engine/`, `templates/`, `static/`).
 2. Update `README.md`, `FEATURES.md`, `docs/design-document.md`, `docs/SRS.md` tech stack sections, regenerate screenshots.
 3. Bump version to `4.0.0` in `pyproject.toml`, `healthcheck`, `host-config`. Write the CHANGELOG entry.
 4. Tag `v4.0.0`.
@@ -485,7 +502,6 @@ presto/
 │   ├── css/app.css
 │   └── js/app.js  (Alpine stores: theme, selection; htmx event handlers)
 ├── tests/                         # pytest-django; engine tests need no DB
-├── frontend_desktop/              # unchanged C# client
 ├── data/  seed_data.json
 ├── docs/
 ├── Dockerfile  docker-compose.yml  nginx.conf  Jenkinsfile
@@ -591,7 +607,7 @@ Use the existing `GET /api/admin/backup` JSON on v3, then `python manage.py rest
 |-------|------|-------|
 | Engine | pytest, no DB | 55 existing tests moved verbatim |
 | Services + models | pytest-django, SQLite in-memory | port of `test_models.py`, `test_auth.py`, `test_integrations.py` |
-| API contract | pytest + OpenAPI diff | every v3 path × method present; selected response-shape asserts |
+| API coverage | pytest + OpenAPI diff | every v3 path × method present or listed as changed; Redmine webhook asserted |
 | API behaviour | ninja `TestClient` | port of `test_api.py`, `test_phase6_api.py`, `test_reports.py` |
 | HTML views | Django `Client` + `BeautifulSoup`/`django-htmx` test helpers | each page renders 200 for an authorised role and 403 for an unauthorised one |
 | Browser | Playwright (already in the toolchain) | wizard happy path, login, theme toggle, one CRUD page, dashboard charts render |
@@ -621,7 +637,8 @@ Total target: ≥ 299 tests before Phase 8, with the parity checklist as the man
 | Hidden behaviour in 4,784-line `routes.py` missed during split | Parity gap | Contract test + move logic to services with the existing API tests as a net; parity checklist per endpoint |
 | Existing MySQL schemas differ in column types from Django defaults | `migrate --fake-initial` adopts but queries fail | Rehearse on a MySQL dump in Phase 1; Path B fallback |
 | bcrypt hash compatibility | Users cannot log in after upgrade | Legacy hasher with unit tests against hashes exported from v3 |
-| JWT contract drift breaks desktop app | Desktop users blocked | Reuse `jwt_secret` config key and claim set; desktop smoke test in Phase 2 |
+| Desktop users not yet on the web app | Users lose their tool at cutover | Announce retirement at Phase 7 staging; share the web URL and login steps |
+| An admin task only reachable via DB or Django admin | Admins blocked without Django admin | Audit every v3 admin action into §5.4; add in-app page or management command for each |
 | ECharts without NiceGUI wrapper | Charts blank in dark mode or after HTMX swap | Re-init on `htmx:afterSettle` and theme change; Playwright asserts canvas present |
 | Scope creep ("while we're here…") | Timeline slips | Non-goals in §1; new ideas go to a `v4.1-backlog.md` |
 | Team unfamiliar with HTMX idioms | Inconsistent pages | Build the CRUD pattern once (Phase 4 step 1), document it, review the first three pages closely |
@@ -631,13 +648,15 @@ Total target: ≥ 299 tests before Phase 8, with the parity checklist as the man
 ## 14. Definition of Done
 
 - [ ] Every row in §5 is checked by the owner on staging.
-- [ ] Contract test: 100 % of v3 API paths present; desktop client passes its smoke script.
+- [ ] Coverage test: every v3 API path present or listed as changed; Redmine webhook works.
 - [ ] `pytest` ≥ 299 passing; Playwright suite green.
 - [ ] Worked example (README) reproduces 511.5 h, 73.1 person-days, 14.6 weeks, AT_RISK.
 - [ ] Upgrade rehearsal on a production DB copy: Path A succeeds, rollback to v3 image verified.
 - [ ] Docker image runs with only port 8000; nginx serves UI and API on the same origin.
 - [ ] README, FEATURES, CHANGELOG, design document, SRS tech-stack section, screenshots updated.
-- [ ] `frontend_nicegui/`, `frontend_web/`, IPC handler removed from `main`; preserved on `v3-maintenance`.
+- [ ] `frontend_nicegui/`, `frontend_web/`, `frontend_desktop/`, IPC handler removed from `main`; preserved on `v3-maintenance`.
+- [ ] No `django.contrib.admin`; every admin task reachable from in-app pages or a documented management command.
+- [ ] Theme follows the user's saved preference across browsers; browser fallback works before login.
 
 ---
 
@@ -649,7 +668,7 @@ Assumes one developer full-time plus one reviewer. Numbers are working weeks.
 |-------|-------|-------|
 | 0 Prep | 0.5 | |
 | 1 Skeleton + models | 1.5 | Model port is mechanical; migration rehearsal takes the time |
-| 2 API parity | 3 | 140 endpoints, service extraction, test port |
+| 2 API parity | 3 | 140 endpoints, service extraction, test port; runs in parallel, off the critical path |
 | 3 UI shell + auth | 1.5 | LDAP/OIDC backends included |
 | 4 Catalog + admin pages | 3 | 19 pages on one pattern |
 | 5 Wizard + detail + edit | 3 | Largest single UI risk |
@@ -662,15 +681,20 @@ Parallelisation: Phases 3–4 can start once Phase 1 models exist, overlapping P
 
 ---
 
-## 16. Open Decisions
+## 16. Decisions
 
-These need an answer before the phase that depends on them.
+### 16.1 Resolved
+
+| # | Question | Decision | Effect on plan |
+|---|----------|----------|----------------|
+| D1 | Is the desktop app still needed? | **No.** Retire it; the Docker-hosted web service replaces it | `frontend_desktop/` and IPC handler removed (§4.7); API kept for integrations only (G5) |
+| D2 | Which Django version? | **5.2 LTS** | Pinned `django>=5.2,<5.3` (§7 Phase 1) |
+| D4 | Ship Django admin? | **No.** All admin features live in the app | No `django.contrib.admin` (§4.9); admin parity in §5.4 |
+| D6 | Where is theme preference stored? | **Per user in the DB, browser as fallback** | `users.theme_preference` column (§4.8) |
+
+### 16.2 Still open
 
 | # | Question | Needed by | Default if unanswered |
 |---|----------|-----------|------------------------|
-| D1 | Is any deployment still running the desktop app in JSON-IPC mode (spawning `ipc_handler.py`)? | Phase 2 | Assume no; delete IPC in Phase 8 |
-| D2 | Django LTS (5.2) or latest (5.x/6.0)? | Phase 1 | 5.2 LTS |
 | D3 | Keep direct TLS in uvicorn, or terminate only at nginx? | Phase 7 | Keep both, as v3 does |
-| D4 | Should v4 ship Django admin (`/django-admin/`) for superusers as an escape hatch? | Phase 3 | Yes, ADMIN role only, not linked from the sidebar |
-| D5 | Streamlit removal: any users still on port 8501 who need notice? | Phase 8 | Announce at Phase 7 staging |
-| D6 | Theme preference stored per user in DB, or browser-only? | Phase 3 | Per user, with browser cache for first paint |
+| D5 | Streamlit and desktop retirement: who needs notice? | Phase 7 | Announce at Phase 7 staging |
