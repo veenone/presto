@@ -215,7 +215,8 @@ def _optional_body(request, schema: type[BaseModel]) -> BaseModel | None:
     try:
         return schema.model_validate_json(request.body)
     except PydanticValidationError as exc:
-        raise ValidationError(exc.errors(include_url=False, include_input=False, include_context=False)) from exc
+        errors = exc.errors(include_url=False, include_input=False, include_context=False)
+        raise ValidationError(errors) from exc
 
 
 _EXPORT_TASKS_OPENAPI = {
