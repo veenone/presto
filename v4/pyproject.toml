@@ -35,10 +35,31 @@ DJANGO_SETTINGS_MODULE = "presto.settings_test"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 markers = ["v3compat: needs the v3 backend (backend/) to build a v3 database"]
+# Deprecations in our code fail the suite; silence the ones raised inside third-party packages.
+filterwarnings = [
+    "error::DeprecationWarning",
+    "ignore:tagMap is deprecated:DeprecationWarning",
+    "ignore:typeMap is deprecated:DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 110
 target-version = "py312"
+# Generated migrations and modules copied verbatim from v3 (kept byte-identical on purpose).
+extend-exclude = [
+    "apps/*/migrations",
+    "engine",
+    "tests/engine",
+    "apps/integrations/adapters",
+    "apps/imports/csv_importer.py",
+    "apps/reports/excel_report.py",
+    "apps/reports/word_report.py",
+    "apps/reports/pdf_report.py",
+    "apps/reports/executive_summary.py",
+    "apps/reports/comparison_report.py",
+    "apps/reports/trend_report.py",
+    "apps/reports/templates.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]

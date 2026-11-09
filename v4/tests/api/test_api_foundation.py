@@ -1,5 +1,4 @@
 import pytest
-from ninja import Router
 
 from apps.accounts import tokens
 from apps.accounts.audit import log_action

@@ -14,17 +14,8 @@ from pathlib import Path
 from django.conf import settings
 
 from . import config
+from .errors import ServiceError  # noqa: F401  (re-exported for callers)
 from .models import Configuration
-
-
-class ServiceError(Exception):
-    """A business-rule failure carrying the HTTP status and v3 message."""
-
-    def __init__(self, status_code: int, detail: str) -> None:
-        super().__init__(detail)
-        self.status_code = status_code
-        self.detail = detail
-
 
 LOGO_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")
 DEFAULT_TEAM_SKILLS = (

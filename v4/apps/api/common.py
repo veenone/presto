@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import json
 from datetime import date
-from typing import Annotated, Any, TypeVar
+from typing import Annotated, Any
 
 from django.db import models
 from ninja.errors import HttpError
 from pydantic import BeforeValidator
-
-M = TypeVar("M", bound=models.Model)
 
 
 def client_ip(request) -> str | None:
@@ -21,7 +19,7 @@ def client_ip(request) -> str | None:
     return request.META.get("REMOTE_ADDR")
 
 
-def get_or_404(model: type[M], pk: Any, detail: str | None = None) -> M:
+def get_or_404[M: models.Model](model: type[M], pk: Any, detail: str | None = None) -> M:
     obj = model.objects.filter(pk=pk).first()
     if obj is None:
         raise HttpError(404, detail or f"{model._meta.verbose_name.capitalize()} not found")

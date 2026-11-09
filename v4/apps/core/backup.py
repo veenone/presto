@@ -8,7 +8,7 @@ unchanged, which makes this a migration path from v3.
 from __future__ import annotations
 
 import json
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from django.core.management.color import no_style
@@ -76,7 +76,7 @@ def build_backup() -> tuple[dict, dict[str, int]]:
         counts[name] = len(rows)
     backup = {
         "version": BACKUP_FORMAT_VERSION,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).replace(tzinfo=None).isoformat(),
         "tables": tables,
     }
     return backup, counts

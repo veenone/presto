@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 
 from django.http import HttpResponse
 from ninja import File, Router, UploadedFile
@@ -26,7 +26,7 @@ def admin_backup(request):
         request.auth, "BACKUP", resource_type="system",
         details={"tables": counts}, ip_address=client_ip(request),
     )
-    stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     resp = HttpResponse(json.dumps(document, indent=2, default=str), content_type="application/json")
     resp["Content-Disposition"] = f'attachment; filename="presto_backup_{stamp}.json"'
     return resp

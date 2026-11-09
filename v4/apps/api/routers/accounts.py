@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from ninja import Router
+from ninja import Router, Status
 from ninja.errors import HttpError
 
 from apps.accounts import services
@@ -108,7 +108,7 @@ def create_user(request, data: UserCreate):
         team_member_id=data.team_member_id,
     )
     log_action(request.auth, "CREATE", "user", new_user.pk, ip_address=client_ip(request))
-    return 201, new_user
+    return Status(201, new_user)
 
 
 @router.get("/users/assignable", response=list[AssignableUserOut])
@@ -144,7 +144,7 @@ def delete_user(request, user_id: int):
     if not services.delete_user(user_id):
         raise HttpError(404, "User not found")
     log_action(request.auth, "DELETE", "user", user_id, ip_address=client_ip(request))
-    return 204, None
+    return Status(204, None)
 
 
 # -- LDAP (ADMIN) ------------------------------------------------------------------

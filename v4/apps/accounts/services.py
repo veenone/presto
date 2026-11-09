@@ -23,13 +23,11 @@ from .models import AuditLog, Role, User
 LOGIN_FAILED_MESSAGE = "Invalid username or password"
 
 
-class AuthError(Exception):
-    """A login failure with the HTTP status and message v3 answered with."""
+from apps.core.errors import ServiceError  # noqa: E402
 
-    def __init__(self, status_code: int, detail: str) -> None:
-        super().__init__(detail)
-        self.status_code = status_code
-        self.detail = detail
+
+class AuthError(ServiceError):
+    """A login failure with the HTTP status and message v3 answered with."""
 
 
 def _utcnow_naive() -> datetime:

@@ -1,6 +1,6 @@
 # PRESTO v4 — Migration Plan: Django + HTMX + Alpine.js
 
-**Status:** In progress (rev. 3: Phase 0 and Phase 1 complete, see §17)
+**Status:** In progress (rev. 4: Phases 0, 1 and 2 complete, see §17)
 **Date:** 2026-11-09
 **Baseline:** v3.4.0 (FastAPI + SQLAlchemy backend, NiceGUI / Streamlit / C# WinForms frontends)
 
@@ -740,3 +740,37 @@ Deviations from the original plan:
 | `sync_redmine` in Phase 1 | Phase 2 | Needs the ported Redmine adapter |
 
 Not yet verified: adoption of a MySQL database (no MySQL instance in this environment). A production copy does not exist (D7).
+
+### Phase 2 — done (2026-11-09)
+
+REST API on django-ninja in `v4/apps/api/`, mounted at `/api/`. Business logic lives in service modules with no ninja imports, ready for the HTML views.
+
+| Domain | Endpoints | Notes |
+|--------|----------:|-------|
+| Auth, users, LDAP/OIDC, audit log | 17 | Local then LDAP login; OIDC provider ported for the web UI |
+| Catalog, teams, configuration, holidays | 65 | Includes logo upload, ICS import, working weeks |
+| Estimation lifecycle | 17 | Create, recalculate, draft, revise with snapshots, status workflow, versions and diff |
+| Reports | 7 | Generators copied unchanged from v3 |
+| Inbox, integrations, notifications, dashboard, import, backup | 33 | Adapters copied unchanged; `sync_redmine` command replaces the in-process scheduler |
+
+Verification:
+
+- 729 tests pass; ruff is clean; DeprecationWarnings fail the suite.
+- Every v3 operation exists in v4 (`test_openapi_coverage.py`).
+- Every v3 operation requires the same role in v4 (`test_access_parity.py`, 133 operations).
+- A side-by-side test runs the v3 app and v4 on the same estimation and compares create, detail, preview, recalculate, revise, versions and diff field by field: identical.
+- A backup produced by the real v3 `/api/admin/backup` restores in v4 (data carry-over Path B).
+- The v4 seed equals a fresh v3 install for every column of every table.
+
+Intentional deviations from v3 (all turn crashes into clean errors or close holes; each is covered by a test):
+
+- Duplicate names and unknown foreign keys return 400/404/409 instead of 500.
+- Attachment uploads strip directory parts from filenames (v3 allowed path traversal).
+- The LDAP login filter escapes the username (v3 allowed filter injection).
+- `PUT /integrations/{name}` rejects `additional_config_json` that is not a JSON object.
+- Empty-string dates in estimation payloads are treated as empty instead of 422.
+
+Known follow-ups:
+
+- Uploaded logos (SVG allowed, ADMIN only) and attachments are served by Django; move to nginx or WhiteNoise in Phase 7.
+- `GET /estimations` builds the full payload per row, as v3 did; optimise if lists grow large.

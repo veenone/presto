@@ -48,13 +48,7 @@ VALID_TRANSITIONS: dict[str, list[str]] = {
 }
 
 
-class ServiceError(Exception):
-    """A v3 ``HTTPException`` raised from service code."""
-
-    def __init__(self, status_code: int, detail: str) -> None:
-        super().__init__(detail)
-        self.status_code = status_code
-        self.detail = detail
+from apps.core.errors import ServiceError  # noqa: E402,F401  (re-exported)
 
 
 def get_estimation(estimation_id: int) -> Estimation:

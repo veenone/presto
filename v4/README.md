@@ -14,7 +14,10 @@ Work-in-progress Django port of PRESTO. See `docs/v4-migration-plan.md` for the 
 | `apps/inbox` | Request inbox |
 | `apps/estimations` | Estimations, tasks, allocations, risks, version snapshots, historical projects |
 | `apps/integrations` | `IntegrationConfig` |
-| `apps/notifications` | In-app notifications |
+| `apps/notifications` | In-app notifications and SMTP notification service |
+| `apps/api` | REST API (`/api/*`, django-ninja): routers, schemas, JWT role auth. Docs at `/api/docs` |
+| `apps/reports` | Excel, Word, PDF, executive summary, comparison and trend reports (generators unchanged from v3) |
+| `apps/imports` | CSV and Excel bulk import |
 | `engine/` | Pure estimation logic, moved unchanged from v3 |
 | `tests/` | pytest-django suite (`tests/engine` needs no database) |
 
@@ -63,6 +66,11 @@ python manage.py ensure_defaults
 | `ensure_defaults` | Adds missing config keys; creates admin/admin when there are no users |
 | `create_admin [--username U] [--password P]` | Creates an admin or resets its password, role and active flag |
 | `check_v3_compat [--before-migrate]` | Compares database tables and columns with the models |
+| `sync_redmine --once` / `--loop` | Imports Redmine issues into the request inbox; `--loop` repeats every `poll_interval_minutes` (replaces the v3 in-process scheduler) |
+
+## API
+
+The REST API lives at `/api/` with the same paths, payloads and roles as v3. See `docs/API_CONVENTIONS.md`. Obtain a token with `POST /api/auth/login` and send `Authorization: Bearer <token>`.
 
 ## Tests
 

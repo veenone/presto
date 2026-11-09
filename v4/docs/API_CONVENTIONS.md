@@ -41,12 +41,13 @@ router = Router(auth=authenticated, tags=["catalog"])   # any logged-in user
 
 - `HTTPException(404, "Feature not found")` becomes `raise HttpError(404, "Feature not found")` (`from ninja.errors import HttpError`). Body: `{"detail": "..."}`, same as v3. Keep v3 messages verbatim.
 - `apps.api.common.get_or_404(Model, pk, "Feature not found")` for lookups.
+- Service code never imports ninja. It raises `apps.core.errors.ServiceError(status_code, detail)`; the API turns it into the same `{"detail": ...}` response (registered in `apps/api/api.py`).
 - Validation errors are 422 `{"detail": [...]}` automatically.
 
 ## Status codes and responses
 
-- `status_code=201` becomes `response={201: FeatureOut}`; return the object or dict.
-- `status_code=204` becomes `response={204: None}`; return `204, None`.
+- `status_code=201` becomes `response={201: FeatureOut}`; return `Status(201, obj)` (`from ninja import Status`).
+- `status_code=204` becomes `response={204: None}`; return `Status(204, None)`. Plain `(status, body)` tuples are deprecated in ninja and fail the test suite.
 - File downloads: return a Django `HttpResponse` with `Content-Disposition`, as v3 did.
 - Uploads: `file: UploadedFile = File(...)` (`from ninja import File, UploadedFile`).
 
@@ -90,4 +91,5 @@ Call another domain's service lazily (import inside the function) when the v3 co
 - Fixtures in `tests/conftest.py`: `api` (admin client), `anon_api`, `api_as(user)`, `make_user(role)`, `seeded` / `admin_user`, `auth_headers`.
 - `ApiClient` mirrors the FastAPI `TestClient`: `api.post("/api/x", json={...})`, `params=`, `files={"file": ("a.txt", b"...", "text/plain")}`; responses have `.status_code` and `.json()`.
 - External HTTP (Redmine, Jira, Outline, Snipe-IT, SMTP) must be mocked, as in v3.
-- Run: `cd v4 && python -m pytest -q tests/...`.
+- Run: `cd v4 && python -m pytest -q tests/...`. DeprecationWarnings raised by our code fail the suite.
+- Guard tests: `tests/api/test_openapi_coverage.py` (every v3 operation exists) and `tests/api/test_access_parity.py` (every v3 operation requires the same role).

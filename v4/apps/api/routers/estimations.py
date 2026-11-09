@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from ninja import Router
+from ninja import Router, Status
 from ninja.errors import HttpError
 
 from apps.api.auth import authenticated, role
@@ -59,7 +59,7 @@ def list_estimations(request):
 def create_estimation(request, data: EstimationCreate):
     """Create a new estimation: resolve inputs, run calculation, save result."""
     estimation = services.create_estimation(data, request.auth)
-    return 201, serialize_estimation(estimation)
+    return Status(201, serialize_estimation(estimation))
 
 
 @router.post("/estimations/reinit", auth=role("ADMIN"))
@@ -86,7 +86,7 @@ def update_estimation(request, estimation_id: int, data: EstimationUpdate):
 @router.delete("/estimations/{estimation_id}", response={204: None}, auth=role("ADMIN"))
 def delete_estimation(request, estimation_id: int):
     _get(estimation_id).delete()
-    return 204, None
+    return Status(204, None)
 
 
 @router.post("/estimations/{estimation_id}/calculate", response=CalculationResultOut)
@@ -133,13 +133,14 @@ def assign_estimation(request, estimation_id: int, assigned_to_id: int):
 )
 def archive_estimation_to_history(request, estimation_id: int):
     """Convert an APPROVED estimation into a historical project record."""
-    return 201, _call(services.archive_to_history, _get(estimation_id))
+    return Status(201, _call(services.archive_to_history, _get(estimation_id)))
 
 
 @router.post("/estimations/{estimation_id}/features", response={201: FeatureOut}, auth=role("ESTIMATOR"))
 def create_project_feature(request, estimation_id: int, data: FeatureCreate):
     """Create a feature scoped to one DRAFT estimation (author or ADMIN only)."""
-    return 201, _call(services.create_project_feature, _get(estimation_id), data.model_dump(), request.auth)
+    estimation = _get(estimation_id)
+    return Status(201, _call(services.create_project_feature, estimation, data.model_dump(), request.auth))
 
 
 # ── Version history ──────────────────────────────────────

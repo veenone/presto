@@ -104,7 +104,11 @@ class LDAPProvider:
             server = ldap3.Server(self.config["ldap_url"], get_info=ldap3.NONE, connect_timeout=10)
             search_base = self.config.get("ldap_search_base", "")
             user_filter_tpl = self.config.get("ldap_user_filter") or "(sAMAccountName={username})"
-            user_filter = user_filter_tpl.replace("{username}", username)
+            # Escape LDAP filter metacharacters so a crafted username such as
+            # "*" or ")(uid=*" cannot change which entry the search returns.
+            from ldap3.utils.conv import escape_filter_chars
+
+            user_filter = user_filter_tpl.replace("{username}", escape_filter_chars(username))
 
             conn = ldap3.Connection(
                 server,

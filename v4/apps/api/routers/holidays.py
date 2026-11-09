@@ -1,6 +1,6 @@
 """API routes: /public-holidays/*, /working-weeks."""
 
-from ninja import File, Router, UploadedFile
+from ninja import File, Router, Status, UploadedFile
 
 from apps.api.auth import authenticated, role
 from apps.api.schemas.holidays import (
@@ -25,7 +25,7 @@ def list_public_holidays(request, year: int | None = None):
 
 @router.post("/public-holidays", response={201: PublicHolidayOut}, auth=role("ADMIN"))
 def create_public_holiday(request, data: PublicHolidayCreate):
-    return 201, services.create_public_holiday(data.model_dump())
+    return Status(201, services.create_public_holiday(data.model_dump()))
 
 
 @router.post("/public-holidays/import-ics", response=IcsImportOut, auth=role("ADMIN"))

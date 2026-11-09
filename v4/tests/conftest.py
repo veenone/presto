@@ -45,10 +45,12 @@ class ApiClient:
                 filename, content, *rest = spec
                 if hasattr(content, "read"):
                     content = content.read()
-                payload[name] = SimpleUploadedFile(filename, content, rest[0] if rest else "application/octet-stream")
+                content_type = rest[0] if rest else "application/octet-stream"
+                payload[name] = SimpleUploadedFile(filename, content, content_type)
             return call(url, data=payload, headers=hdrs)
         if json is not None:
-            return call(url, data=jsonlib.dumps(json, default=str), content_type="application/json", headers=hdrs)
+            body = jsonlib.dumps(json, default=str)
+            return call(url, data=body, content_type="application/json", headers=hdrs)
         if method == "get":
             return call(url, headers=hdrs)
         return call(url, data=data or {}, headers=hdrs) if data else call(url, headers=hdrs)

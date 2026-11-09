@@ -10,6 +10,8 @@ from django.http import JsonResponse
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError
 
+from apps.core.errors import ServiceError
+
 from .routers import (
     accounts,
     admin,
@@ -34,6 +36,12 @@ api = NinjaAPI(
     urls_namespace="api",
     docs_url="/docs",
 )
+
+
+@api.exception_handler(ServiceError)
+def _service_error(request, exc: ServiceError):
+    """Business-rule failures raised by services, as v3 ``HTTPException`` bodies."""
+    return api.create_response(request, {"detail": exc.detail}, status=exc.status_code)
 
 
 @api.exception_handler(AuthenticationError)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ninja import File, Router, UploadedFile
+from ninja import File, Router, Status, UploadedFile
 from ninja.errors import HttpError
 
 from apps.accounts.audit import log_action
@@ -34,7 +34,7 @@ def list_requests(request, status: str | None = None):
 
 @router.post("/requests", response={201: RequestOut}, auth=role("ESTIMATOR"))
 def create_request(request, data: RequestCreate):
-    return 201, services.create_request(data.model_dump())
+    return Status(201, services.create_request(data.model_dump()))
 
 
 @router.post("/requests/reinit", response=ReinitOut, auth=role("ADMIN"))

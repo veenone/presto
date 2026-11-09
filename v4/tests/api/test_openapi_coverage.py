@@ -38,12 +38,14 @@ def missing_operations() -> list[tuple[str, str]]:
 
 def test_all_v3_operations_exist():
     missing = missing_operations()
-    assert not missing, f"{len(missing)} v3 operations missing in v4:\n" + "\n".join(f"  {m} {p}" for m, p in missing)
+    listing = "\n".join(f"  {m} {p}" for m, p in missing)
+    assert not missing, f"{len(missing)} v3 operations missing in v4:\n{listing}"
 
 
 if __name__ == "__main__":  # quick report: python -m tests.api.test_openapi_coverage
-    import django
     import os
+
+    import django
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "presto.settings_test")
     django.setup()
     for m, p in missing_operations():

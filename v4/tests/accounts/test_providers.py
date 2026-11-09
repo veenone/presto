@@ -134,6 +134,12 @@ class TestLdapAuthenticate:
         with FakeLdap([_entry(groups=[APPROVER_GROUP, ADMIN_GROUP])]):
             assert LDAPProvider().authenticate("jdoe", "pw").role == "ADMIN"
 
+    def test_username_is_escaped_in_search_filter(self, ldap_config):
+        """Filter metacharacters in the username cannot widen the LDAP search."""
+        with FakeLdap([]) as fake:
+            assert LDAPProvider().authenticate("*)(uid=*", "pw") is None
+        assert fake.searches[0][0][1] == r"(sAMAccountName=\2a\29\28uid=\2a)"
+
     def test_unknown_user(self, ldap_config):
         with FakeLdap([]):
             assert LDAPProvider().authenticate("ghost", "pw") is None

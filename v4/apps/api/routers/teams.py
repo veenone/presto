@@ -1,6 +1,6 @@
 """API routes: /team-members/*, /teams/*."""
 
-from ninja import Router
+from ninja import Router, Status
 
 from apps.api.auth import authenticated, role
 from apps.api.common import parse_json_text
@@ -37,7 +37,7 @@ def list_team_members(request):
 
 @router.post("/team-members", response={201: TeamMemberOut}, auth=role("ADMIN"))
 def create_team_member(request, data: TeamMemberCreate):
-    return 201, services.create_team_member(_member_fields(data))
+    return Status(201, services.create_team_member(_member_fields(data)))
 
 
 @router.put("/team-members/{member_id}", response=TeamMemberOut, auth=role("ADMIN"))
@@ -48,7 +48,7 @@ def update_team_member(request, member_id: int, data: TeamMemberUpdate):
 @router.delete("/team-members/{member_id}", response={204: None}, auth=role("ADMIN"))
 def delete_team_member(request, member_id: int):
     call(services.delete_team_member, member_id)
-    return 204, None
+    return Status(204, None)
 
 
 # ── Teams ────────────────────────────────────────────────
@@ -60,7 +60,7 @@ def list_teams(request):
 
 @router.post("/teams", response={201: TeamOut}, auth=role("APPROVER"))
 def create_team(request, data: TeamCreate):
-    return 201, call(services.create_team, data.name, data.description)
+    return Status(201, call(services.create_team, data.name, data.description))
 
 
 @router.put("/teams/{team_id}", response=TeamOut, auth=role("APPROVER"))
@@ -71,7 +71,7 @@ def update_team(request, team_id: int, data: TeamUpdate):
 @router.delete("/teams/{team_id}", response={204: None}, auth=role("APPROVER"))
 def delete_team(request, team_id: int):
     call(services.delete_team, team_id)
-    return 204, None
+    return Status(204, None)
 
 
 @router.put("/teams/{team_id}/members", response=TeamMembersResult, auth=role("APPROVER"))

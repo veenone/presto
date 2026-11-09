@@ -4,7 +4,7 @@
 from collections.abc import Callable
 from typing import Any
 
-from ninja import Router
+from ninja import Router, Status
 from ninja.errors import HttpError
 
 from apps.api.auth import authenticated, role
@@ -62,10 +62,10 @@ def list_feature_presets(request, product_type: str | None = None):
 
 @router.post("/feature-presets", response={201: FeaturePresetOut}, auth=role("ESTIMATOR"))
 def create_feature_preset(request, data: FeaturePresetCreate):
-    return 201, call(
+    return Status(201, call(
         services.create_feature_preset, request.auth, data.name, data.description,
         data.product_type, data.feature_ids,
-    )
+    ))
 
 
 @router.put("/feature-presets/{preset_id}", response=FeaturePresetOut, auth=role("ESTIMATOR"))
@@ -76,7 +76,7 @@ def update_feature_preset(request, preset_id: int, data: FeaturePresetUpdate):
 @router.delete("/feature-presets/{preset_id}", response={204: None}, auth=role("ESTIMATOR"))
 def delete_feature_preset(request, preset_id: int):
     call(services.delete_feature_preset, preset_id, request.auth)
-    return 204, None
+    return Status(204, None)
 
 
 # ── Features ─────────────────────────────────────────────
@@ -91,7 +91,7 @@ def list_features(request, product_type: str | None = None, estimation_id: int |
 @router.post("/features", response={201: FeatureOut}, auth=role("APPROVER"))
 def create_feature(request, data: FeatureCreate):
     """Create a global (shared-catalog) feature."""
-    return 201, call(services.create_feature, data.model_dump())
+    return Status(201, call(services.create_feature, data.model_dump()))
 
 
 @router.get("/features/{feature_id}", response=FeatureOut)
@@ -107,7 +107,7 @@ def update_feature(request, feature_id: int, data: FeatureUpdate):
 @router.delete("/features/{feature_id}", response={204: None}, auth=role("ESTIMATOR"))
 def delete_feature(request, feature_id: int):
     call(services.delete_feature, feature_id, request.auth)
-    return 204, None
+    return Status(204, None)
 
 
 @router.post("/features/{feature_id}/promote", response=FeatureOut, auth=role("APPROVER"))
@@ -131,7 +131,7 @@ def list_task_templates(request, feature_id: int | None = None, product_type: st
 
 @router.post("/task-templates", response={201: TaskTemplateOut}, auth=role("APPROVER"))
 def create_task_template(request, data: TaskTemplateCreate):
-    return 201, call(services.create_task_template, data.model_dump())
+    return Status(201, call(services.create_task_template, data.model_dump()))
 
 
 @router.put("/task-templates/{template_id}", response=TaskTemplateOut, auth=role("APPROVER"))
@@ -142,7 +142,7 @@ def update_task_template(request, template_id: int, data: TaskTemplateUpdate):
 @router.delete("/task-templates/{template_id}", response={204: None}, auth=role("APPROVER"))
 def delete_task_template(request, template_id: int):
     call(services.delete_task_template, template_id)
-    return 204, None
+    return Status(204, None)
 
 
 # ── DUT types ────────────────────────────────────────────
@@ -154,7 +154,7 @@ def list_dut_types(request, product_type: str | None = None):
 
 @router.post("/dut-types", response={201: DutTypeOut}, auth=role("APPROVER"))
 def create_dut_type(request, data: DutTypeCreate):
-    return 201, call(services.create_dut_type, data.model_dump())
+    return Status(201, call(services.create_dut_type, data.model_dump()))
 
 
 @router.post("/dut-types/reinit", response=DutReinitOut, auth=role("ADMIN"))
@@ -171,7 +171,7 @@ def update_dut_type(request, dut_id: int, data: DutTypeUpdate):
 @router.delete("/dut-types/{dut_id}", response={204: None}, auth=role("APPROVER"))
 def delete_dut_type(request, dut_id: int):
     call(services.delete_dut_type, dut_id)
-    return 204, None
+    return Status(204, None)
 
 
 # ── Test profiles ────────────────────────────────────────
@@ -183,7 +183,7 @@ def list_profiles(request, product_type: str | None = None):
 
 @router.post("/profiles", response={201: TestProfileOut}, auth=role("APPROVER"))
 def create_profile(request, data: TestProfileCreate):
-    return 201, call(services.create_profile, data.model_dump())
+    return Status(201, call(services.create_profile, data.model_dump()))
 
 
 @router.put("/profiles/{profile_id}", response=TestProfileOut, auth=role("APPROVER"))
@@ -194,7 +194,7 @@ def update_profile(request, profile_id: int, data: TestProfileUpdate):
 @router.delete("/profiles/{profile_id}", response={204: None}, auth=role("APPROVER"))
 def delete_profile(request, profile_id: int):
     call(services.delete_profile, profile_id)
-    return 204, None
+    return Status(204, None)
 
 
 # ── Historical projects ──────────────────────────────────
@@ -213,7 +213,7 @@ def list_historical_projects(request):
 
 @router.post("/historical-projects", response={201: HistoricalProjectOut}, auth=role("APPROVER"))
 def create_historical_project(request, data: HistoricalProjectCreate):
-    return 201, call(services.create_historical_project, _historical_fields(data))
+    return Status(201, call(services.create_historical_project, _historical_fields(data)))
 
 
 @router.put("/historical-projects/{project_id}", response=HistoricalProjectOut, auth=role("APPROVER"))
@@ -224,7 +224,7 @@ def update_historical_project(request, project_id: int, data: HistoricalProjectC
 @router.delete("/historical-projects/{project_id}", response={204: None}, auth=role("APPROVER"))
 def delete_historical_project(request, project_id: int):
     call(services.delete_historical_project, project_id)
-    return 204, None
+    return Status(204, None)
 
 
 # ── Task presets ─────────────────────────────────────────
@@ -236,7 +236,7 @@ def list_task_presets(request, product_type: str | None = None):
 
 @router.post("/task-presets", response={201: TaskPresetOut}, auth=role("ESTIMATOR"))
 def create_task_preset(request, data: TaskPresetCreate):
-    return 201, call(services.create_task_preset, data.model_dump())
+    return Status(201, call(services.create_task_preset, data.model_dump()))
 
 
 @router.put("/task-presets/{preset_id}", response=TaskPresetOut, auth=role("ESTIMATOR"))
@@ -247,7 +247,7 @@ def update_task_preset(request, preset_id: int, data: TaskPresetUpdate):
 @router.delete("/task-presets/{preset_id}", response={204: None}, auth=role("ESTIMATOR"))
 def delete_task_preset(request, preset_id: int):
     call(services.delete_task_preset, preset_id)
-    return 204, None
+    return Status(204, None)
 
 
 # ── Risk items ───────────────────────────────────────────
@@ -259,7 +259,7 @@ def list_risk_items(request):
 
 @router.post("/risk-items", response={201: RiskItemOut}, auth=role("ESTIMATOR"))
 def create_risk_item(request, data: RiskItemCreate):
-    return 201, call(services.create_risk_item, data.model_dump())
+    return Status(201, call(services.create_risk_item, data.model_dump()))
 
 
 @router.put("/risk-items/{item_id}", response=RiskItemOut, auth=role("ESTIMATOR"))
@@ -270,7 +270,7 @@ def update_risk_item(request, item_id: int, data: RiskItemUpdate):
 @router.delete("/risk-items/{item_id}", response={204: None}, auth=role("APPROVER"))
 def delete_risk_item(request, item_id: int):
     call(services.delete_risk_item, item_id)
-    return 204, None
+    return Status(204, None)
 
 
 # ── Document types ───────────────────────────────────────
@@ -287,7 +287,7 @@ def list_all_document_types(request):
 
 @router.post("/document-types", response={201: DocumentTypeOut}, auth=role("ESTIMATOR"))
 def create_document_type(request, data: DocumentTypeCreate):
-    return 201, call(services.create_document_type, data.model_dump())
+    return Status(201, call(services.create_document_type, data.model_dump()))
 
 
 @router.put("/document-types/{item_id}", response=DocumentTypeOut, auth=role("ESTIMATOR"))
@@ -298,4 +298,4 @@ def update_document_type(request, item_id: int, data: DocumentTypeUpdate):
 @router.delete("/document-types/{item_id}", response={204: None}, auth=role("APPROVER"))
 def delete_document_type(request, item_id: int):
     call(services.delete_document_type, item_id)
-    return 204, None
+    return Status(204, None)
