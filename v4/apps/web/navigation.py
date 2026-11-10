@@ -48,7 +48,7 @@ NAVIGATION: tuple[NavSection, ...] = (
         NavItem("Task Templates", "assignment", "tasks", "/tasks", phase=4),
         NavItem("DUT Registry", "devices", "duts", "/duts", phase=4),
         NavItem("DUT Assets", "inventory", "assets", "/assets", phase=4),
-        NavItem("Test Profiles", "tune", "profiles", "/profiles", phase=4),
+        NavItem("Test Profiles", "tune", "profiles", "/profiles"),
         NavItem("Historical Projects", "history", "history", "/history", phase=4),
         NavItem("Team Members", "group", "team", "/team", phase=4),
         NavItem("Risk Registry", "warning", "risks", "/risks", phase=4),

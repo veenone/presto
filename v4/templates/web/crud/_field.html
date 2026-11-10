@@ -1,0 +1,12 @@
+{% if field.is_hidden %}{{ field }}{% else %}
+<div class="field{% if field.field.widget.input_type == 'checkbox' %} field-switch{% endif %}">
+  {% if field.field.widget.input_type == "checkbox" %}
+    <label class="switch">{{ field }}<span class="switch-track" aria-hidden="true"></span><span>{{ field.label }}</span></label>
+  {% else %}
+    <label class="field-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+    {{ field }}
+  {% endif %}
+  {% if field.help_text %}<span class="field-help">{{ field.help_text }}</span>{% endif %}
+  {% for e in field.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+</div>
+{% endif %}

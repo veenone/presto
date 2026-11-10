@@ -43,7 +43,7 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py312"
 # Generated migrations and modules copied verbatim from v3 (kept byte-identical on purpose).
 extend-exclude = [

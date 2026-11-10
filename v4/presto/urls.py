@@ -1,3 +1,5 @@
+from importlib import import_module
+
 from django.conf import settings
 from django.urls import path, re_path
 from django.views.static import serve
@@ -7,6 +9,7 @@ from apps.api.api import api
 from apps.notifications import views as notification_views
 from apps.web import views as web_views
 from apps.web.navigation import ITEMS_BY_NAME
+from apps.web.urls import MODULES as WEB_URL_MODULES
 
 handler400 = "apps.web.views.error_400"
 handler403 = "apps.web.views.error_403"
@@ -33,13 +36,17 @@ urlpatterns = [
     path("", web_views.dashboard, name="dashboard"),
 ]
 
+for _module in WEB_URL_MODULES:
+    urlpatterns += import_module(_module).urlpatterns
+_registered = {p.name for p in urlpatterns if getattr(p, "name", None)}
+
 # Pages whose HTML arrives in later phases keep their v3 URLs and access rules now.
 _DETAIL_ROUTES = {
     "requests": ["requests/<int:request_id>"],
     "estimations": ["estimation/<int:estimation_id>", "estimation/<int:estimation_id>/edit"],
 }
 for _name, _item in ITEMS_BY_NAME.items():
-    if _name == "dashboard":
+    if _name in _registered:
         continue
     urlpatterns.append(path(_item.path.lstrip("/"), web_views.placeholder, {"url_name": _name}, name=_name))
     for _i, _route in enumerate(_DETAIL_ROUTES.get(_name, [])):

@@ -30,6 +30,38 @@ How HTML pages are built in v4. Read with `API_CONVENTIONS.md`: pages call the s
 - Session expiry during an htmx request returns `HX-Redirect` to the login page.
 - Do not put a GET-only view inside a POST view's response path (render a shared helper instead); every view states its methods with `require_GET` / `require_POST`.
 
+## List + edit pages (`apps/web/crud.py`)
+
+The v3 data-management pattern (toolbar with Add and TOTAL, stat tiles, segmented filter, search, sortable paged table, add/edit dialog, delete confirmation) is one class. Reference implementation: `apps/catalog/pages/profiles.py` and `tests/web/test_profiles_page.py`.
+
+```python
+class ProfilesPage(CrudPage):
+    url_name = "profiles"                 # navigation item name
+    title, noun = "Test Profiles", "Profile"
+    write_role = "APPROVER"               # same minimum role as the API write endpoints
+    form_class = ProfileForm              # a StyledForm
+    columns = [Column("name", "Name", sortable=True, kind="strong"), ...]
+    search_fields = ["name", "description"]
+    def get_rows(self, request) -> list[dict]: ...          # rows as dicts (keys = column keys + "id")
+    def get_segments(self, rows) -> list[Segment]: ...       # segmented filter (+ "all")
+    def get_tiles(self, rows) -> list[Tile]: ...             # KPI strip; Tile(segment=...) makes it a filter
+    def get_initial(self, request, obj_id) -> dict: ...      # raise Http404 for unknown ids
+    def create/update/delete(self, request, ...): ...         # call the domain service; ServiceError -> shown in the dialog
+```
+
+- Register with `urlpatterns = [*ProfilesPage.urls("profiles")]` in the page group's module under `apps/web/urls/`. Unregistered nav items keep their placeholder automatically.
+- Column kinds: `text`, `strong`, `mono`, `truncate` (60 chars + tooltip), `bool` (check/cross icon), `badge`; `fmt` formats numbers (`"{:.2f}"`).
+- Override `template_name` / `results_template` / `form_template` (extend the `web/crud/*` templates and their blocks: `toolbar_extra`, `above_results`, `filters_extra`, `row_lead`, `row_actions`, `fields`) for pages that need more (bulk selection, extra dialogs).
+- The results container uses `hx-disinherit="*"`; give every control inside it explicit `hx-target`/`hx-swap`.
+- Page-specific CSS goes in `static/css/pages/<group>.css`, loaded from the page template's `{% block head %}`; shared tokens stay in `app.css`.
+- Successful saves answer 204 with `HX-Trigger` `crud-refresh` + `close-modal` + `toast`; invalid forms answer 422 with the dialog re-rendered (htmx is configured to swap 422).
+
+## Gotchas found in Phase 4
+
+- `runserver --noreload` keeps serving cached templates: restart it after template edits when testing in a browser.
+- Elements placed inside `.app` become grid cells; overlays (modal host) live outside it.
+- htmx attributes inherit to descendants; a container with `hx-swap="outerHTML"` will hijack nested buttons unless `hx-disinherit` is set.
+
 ## Alpine patterns
 
 - Global stores: `$store.theme` (`toggle()`, `set("light")`) and `$store.toasts` (`push(message, level)`).

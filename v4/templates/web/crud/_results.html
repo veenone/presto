@@ -1,0 +1,105 @@
+{% load presto %}
+{# hx-disinherit: the refresh attributes below must not leak into the row buttons (they target #modal). #}
+<div id="crud-results" hx-get="{{ links.self }}" hx-trigger="crud-refresh from:body" hx-swap="outerHTML"
+     hx-target="this" hx-disinherit="*">
+  <form id="crud-state" hidden>
+    <input type="hidden" name="seg" value="{{ state.seg }}">
+    <input type="hidden" name="sort" value="{{ state.sort }}">
+    <input type="hidden" name="dir" value="{{ state.dir }}">
+  </form>
+
+  {% if results.tiles %}
+  <div class="ed-strip">
+    {% for tile in results.tiles %}
+      {% if tile.segment %}
+        <a class="ed-strip-cell ed-stat-tile{% if tile.segment == state.seg %} active{% endif %}"
+           href="{{ links.segments|get:tile.segment }}" hx-get="{{ links.segments|get:tile.segment }}"
+           hx-target="#crud-results" hx-swap="outerHTML" hx-push-url="true">
+      {% else %}
+        <div class="ed-strip-cell">
+      {% endif %}
+          <div class="ed-eyebrow">{{ tile.label }}</div>
+          <div class="ed-strip-num">{{ tile.value }}</div>
+          {% if tile.sub %}<div class="ed-stat-tile-sub">{{ tile.sub }}</div>{% endif %}
+      {% if tile.segment %}</a>{% else %}</div>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if results.segments|length > 1 %}
+  <div class="ed-segmented" role="group" aria-label="Filter">
+    {% for seg in results.segments %}
+      {% if seg.count or seg.key == state.seg or seg.key == "all" %}
+      <a class="ed-segmented-item{% if seg.key == state.seg %} active{% endif %}"
+         {% if seg.key == state.seg %}aria-current="true"{% endif %}
+         href="{{ links.segments|get:seg.key }}"
+         hx-get="{{ links.segments|get:seg.key }}"
+         hx-target="#crud-results" hx-swap="outerHTML" hx-push-url="true">
+        {{ seg.label }}<span class="seg-count">· {{ seg.count }}</span>
+      </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="ed-card ed-card-table">
+    {% if results.rows %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            {% block head_lead %}{% endblock %}
+            {% for col in crud.columns %}
+              <th class="align-{{ col.align }}" scope="col"
+                  {% if col.sortable %}aria-sort="{% if state.sort == col.key %}{% if state.dir == 'desc' %}descending{% else %}ascending{% endif %}{% else %}none{% endif %}"{% endif %}>
+                {% if col.sortable %}
+                  {% with v=links.sort|get:col.key %}
+                  <a class="th-sort{% if state.sort == col.key %} sorted{% endif %}" href="{{ v }}" hx-get="{{ v }}"
+                     hx-target="#crud-results" hx-swap="outerHTML" hx-push-url="true">
+                    {{ col.label }}
+                    {% if state.sort == col.key %}{% if state.dir == "desc" %}{% icon "arrow_downward" "sort-ind" %}{% else %}{% icon "arrow_upward" "sort-ind" %}{% endif %}{% endif %}
+                  </a>
+                  {% endwith %}
+                {% else %}{{ col.label }}{% endif %}
+              </th>
+            {% endfor %}
+            {% if can_write %}<th class="align-right" scope="col">Actions</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in results.rows %}
+            <tr>
+              {% block row_lead %}{% endblock %}
+              {% for col in crud.columns %}
+                <td class="align-{{ col.align }} kind-{{ col.kind }}">{% cell row col %}</td>
+              {% endfor %}
+              {% if can_write %}
+                <td class="align-right actions">
+                  {% block row_actions %}
+                  {% if crud.can_edit %}
+                    <button type="button" class="btn-round sm tone-primary" title="Edit" aria-label="Edit {{ crud.noun }} {{ row.id }}"
+                            hx-get="{{ list_path }}/{{ row.id }}/edit" hx-target="#modal">{% icon "edit" %}</button>
+                  {% endif %}
+                  {% if crud.can_delete %}
+                    <button type="button" class="btn-round sm tone-negative" title="Delete" aria-label="Delete {{ crud.noun }} {{ row.id }}"
+                            hx-get="{{ list_path }}/{{ row.id }}/delete" hx-target="#modal">{% icon "delete" %}</button>
+                  {% endif %}
+                  {% endblock %}
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span class="ed-mono">{{ results.start }}–{{ results.end }} of {{ results.filtered }}</span>
+      <a class="btn-round sm{% if not links.prev %} disabled{% endif %}" {% if links.prev %}href="{{ links.prev }}" hx-get="{{ links.prev }}" hx-target="#crud-results" hx-swap="outerHTML" hx-push-url="true"{% else %}aria-disabled="true"{% endif %} title="Previous page" aria-label="Previous page">{% icon "chevron_left" %}</a>
+      <a class="btn-round sm{% if not links.next %} disabled{% endif %}" {% if links.next %}href="{{ links.next }}" hx-get="{{ links.next }}" hx-target="#crud-results" hx-swap="outerHTML" hx-push-url="true"{% else %}aria-disabled="true"{% endif %} title="Next page" aria-label="Next page">{% icon "chevron_right" %}</a>
+    </div>
+    {% else %}
+      <div class="ed-empty">{% if results.total %}No results match your filters.{% else %}No {{ crud.title|lower }} yet.{% endif %}</div>
+    {% endif %}
+  </div>
+  <span hidden hx-swap-oob="innerHTML:#crud-total">TOTAL · {{ results.total }}</span>
+</div>

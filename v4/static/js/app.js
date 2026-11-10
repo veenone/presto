@@ -85,6 +85,54 @@
     }
   });
 
+  // htmx: swap 422 responses (forms re-rendered with errors); other 4xx/5xx are errors.
+  if (window.htmx) {
+    window.htmx.config.responseHandling = [
+      { code: "204", swap: false },
+      { code: "[23]..", swap: true },
+      { code: "422", swap: true },
+      { code: "[45]..", swap: false, error: true },
+      { code: "...", swap: false },
+    ];
+  }
+
+  // Keep GET URLs tidy (they are pushed to the address bar): drop empty and default list params.
+  var LIST_DEFAULTS = { seg: "all", dir: "asc", page: "1" };
+  document.addEventListener("htmx:configRequest", function (e) {
+    if (e.detail.verb !== "get") return;
+    var params = e.detail.parameters;
+    Object.keys(params).forEach(function (k) {
+      if (params[k] === "" || LIST_DEFAULTS[k] === params[k]) delete params[k];
+    });
+  });
+
+  // Modal host (#modal): close on HX-Trigger "close-modal", Escape, backdrop or [data-close-modal].
+  function closeModal() {
+    var host = document.getElementById("modal");
+    if (host && host.firstElementChild) {
+      host.innerHTML = "";
+      if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+    }
+  }
+  var lastFocus = null;
+  // Deferred: htmx fires the remaining HX-Trigger events (e.g. "toast") on the form that
+  // made the request, so it must still be attached when they bubble.
+  document.addEventListener("close-modal", function () { setTimeout(closeModal, 0); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-close-modal]") || e.target.matches("[data-modal]")) closeModal();
+  });
+  document.addEventListener("htmx:beforeRequest", function (e) {
+    if (e.detail.target && e.detail.target.id === "modal" && !document.getElementById("modal").firstElementChild) {
+      lastFocus = document.activeElement;
+    }
+  });
+  document.addEventListener("htmx:afterSwap", function (e) {
+    if (e.detail.target.id !== "modal") return;
+    var first = e.detail.target.querySelector("[aria-invalid=true], .modal input:not([type=hidden]), .modal select, .modal textarea, .modal button[type=submit]");
+    if (first) first.focus();
+  });
+
   // HX-Trigger: {"toast": {"message": "...", "level": "success"}}
   document.addEventListener("toast", function (e) {
     var d = e.detail || {};

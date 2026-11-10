@@ -317,3 +317,84 @@ a { color: var(--primary); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* ── List pages (v3 data-management pattern) ────────────────────────── */
+.ed-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px 24px;
+              margin: -16px -24px 24px; position: sticky; top: 0; z-index: 30;
+              backdrop-filter: blur(14px); background: color-mix(in srgb, var(--content-bg) 85%, transparent);
+              border-bottom: 1px solid var(--ed-line); }
+.app.drawer-closed .ed-toolbar { margin-left: -64px; padding-left: 64px; }
+@media (max-width: 1023px) { .ed-toolbar, .app.drawer-closed .ed-toolbar { margin: -60px -16px 20px; padding: 10px 16px 10px 56px; } }
+.ed-toolbar-grow { flex: 1; min-width: 16px; }
+.page-title-list { margin: 0 0 18px; }
+.ed-stat-tile { cursor: pointer; color: inherit; text-decoration: none; transition: background 160ms ease; }
+.ed-stat-tile:hover { background: var(--ed-bg-soft); }
+.ed-stat-tile.active { background: color-mix(in srgb, var(--primary) 12%, transparent);
+                       box-shadow: inset 0 0 0 2px var(--primary); }
+.ed-stat-tile.active .ed-strip-num { color: var(--primary); }
+.ed-stat-tile-sub { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.ed-segmented { display: inline-flex; align-items: center; gap: 4px; padding: 4px; margin: 18px 0 14px;
+                border: 1px solid var(--ed-line); border-radius: 99px; flex-wrap: wrap; }
+.ed-segmented-item { padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 500; color: inherit;
+                     text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+                     transition: all 140ms ease; line-height: 1.2; }
+.ed-segmented-item .seg-count { font-family: var(--ed-mono); font-size: 11px; opacity: 0.55; }
+.ed-segmented-item:hover { background: var(--ed-bg-soft); }
+.ed-segmented-item.active { background: var(--primary); color: var(--on-primary); }
+.ed-segmented-item.active .seg-count { opacity: 0.85; }
+.ed-filter-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 18px 0 14px;
+                 padding: 12px 16px; border: 1px solid var(--ed-line); border-radius: var(--radius);
+                 background: var(--ed-bg-soft); }
+.ed-filter-label { text-transform: uppercase; letter-spacing: 0.12em; font-size: 10px; font-weight: 600; opacity: 0.6; }
+.ed-search { max-width: 420px; flex: 1; min-width: 200px; }
+.ed-strip + .ed-filter-row, .ed-segmented + .ed-card { margin-top: 0; }
+
+.ed-card-table { padding: 0; overflow: hidden; }
+.table-scroll { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { background: var(--table-header-bg); color: inherit; text-transform: uppercase; letter-spacing: 0.10em;
+                 font-size: 10px; font-weight: 700; padding: 10px 14px; white-space: nowrap; text-align: left; }
+.data-table td { padding: 10px 14px; border-top: 1px solid var(--ed-line-soft); vertical-align: middle;
+                 font-family: var(--ed-mono); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.data-table td.kind-text, .data-table td.kind-strong, .data-table td.kind-truncate { font-family: var(--font); font-size: 13px; }
+.data-table tbody tr:hover { background: var(--ed-bg-soft); }
+.data-table .align-center { text-align: center; } .data-table .align-right { text-align: right; }
+.data-table td.actions { white-space: nowrap; }
+.th-sort { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.th-sort:hover { text-decoration: underline; }
+.sort-ind { font-size: 14px; }
+.muted { opacity: 0.45; }
+.tone-positive { color: var(--positive); } .tone-negative { color: var(--negative); } .tone-primary { color: var(--primary); }
+:root[data-theme="dark"] .tone-negative { color: #FF6B6B; }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 8px 12px;
+         border-top: 1px solid var(--ed-line-soft); font-size: 12px; }
+.pager .disabled { opacity: 0.35; pointer-events: none; }
+.ed-card-table .ed-empty { margin: 16px; }
+
+/* ── Modal dialogs ──────────────────────────────────────────────────── */
+.modal-backdrop { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.5);
+                  display: flex; align-items: flex-start; justify-content: center; padding: 8vh 16px 16px;
+                  overflow-y: auto; }
+.modal { width: min(480px, 100%); background: var(--surface); color: var(--fg); border-radius: 6px;
+         box-shadow: var(--shadow); border: 1px solid var(--ed-line); }
+.modal-sm { width: min(400px, 100%); }
+.modal-lg { width: min(720px, 100%); }
+.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 16px 20px 4px; }
+.modal-title { font-size: 20px; font-weight: 500; margin: 0; }
+.modal-body { padding: 12px 20px; }
+.modal-body .alert { margin-bottom: 14px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 20px 18px; }
+.btn-danger { background: var(--negative); color: #fff; }
+.btn-danger:hover { filter: brightness(1.1); }
+.field-help { font-size: 12px; color: var(--fg-muted); }
+textarea.input { min-height: 84px; resize: vertical; }
+select.input { appearance: auto; }
+.switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; }
+.switch-input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch-track { width: 36px; height: 20px; border-radius: 99px; background: var(--ed-line); position: relative;
+                transition: background 140ms ease; flex: none; }
+.switch-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+                       background: #fff; transition: transform 140ms ease; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.switch-input:checked + .switch-track { background: var(--primary); }
+.switch-input:checked + .switch-track::after { transform: translateX(16px); }
+.switch-input:focus-visible + .switch-track { outline: 2px solid var(--primary); outline-offset: 2px; }
