@@ -226,6 +226,8 @@ def canonical(spec: Spec, raw: str) -> Any:
             return raw
     if spec.kind == "bool":
         return raw.strip().lower() in {"1", "true", "yes", "on"}
+    if spec.kind == "color":
+        return raw.strip().lower()
     return raw.strip()
 
 
@@ -275,7 +277,7 @@ def parse_value(key: str, spec: Spec, post) -> str | None:
     if kind == "color":
         if not COLOR_RE.match(text):
             raise Invalid("Enter a hex colour such as #1976D2.")
-        return text.upper() if len(text) == 7 else text
+        return text
     if kind == "choice":
         if text not in spec.choices:
             raise Invalid(f"Choose one of: {', '.join(spec.choices)}.")

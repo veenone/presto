@@ -271,9 +271,14 @@ class TestSave:
 
     def test_theme_colour_applies_on_next_load(self, admin_client):
         save(admin_client, {"button_color_dark": "#ff5722", "content_bg_light": "#abc"})
-        assert value("button_color_dark") == "#FF5722" and value("content_bg_light") == "#abc"
+        assert value("button_color_dark") == "#ff5722" and value("content_bg_light") == "#abc"
         body = admin_client.get("/settings").content.decode()
-        assert "--primary: #FF5722" in body and "--content-bg: #abc" in body
+        assert "--primary: #ff5722" in body and "--content-bg: #abc" in body
+
+    def test_colour_case_change_is_no_change(self, admin_client):
+        assert value("calendar_today_bg_light") == "#e0e0e0"
+        resp = save(admin_client, {"calendar_today_bg_light": "#E0E0E0", "button_color_light": "#1976d2"})
+        assert "HX-Redirect" not in resp and value("calendar_today_bg_light") == "#e0e0e0"
 
     def test_unknown_keys_editable_as_text(self, admin_client):
         Configuration.objects.create(key="custom_flag", value="a", description="")
