@@ -1,0 +1,79 @@
+{% load presto %}
+<div class="wz-features" x-data="{ q: '', cat: '' }">
+  <div class="wz-row">
+    {% if can_custom %}
+      <button type="button" class="btn btn-outline btn-dense" hx-post="{{ wiz.url }}/feature/new" hx-target="#modal"
+              hx-swap="innerHTML">{% icon "add" %}Add custom feature</button>
+      <span class="field-help">No suitable template entry? Add a project-specific one.{% if wiz.mode == "new" and not wiz.draft_id %} The draft is saved first.{% endif %}</span>
+    {% else %}
+      <span class="field-help">Custom project features can be added to drafts only.</span>
+    {% endif %}
+  </div>
+
+  <div class="wz-presets" role="group" aria-label="Feature presets">
+    <label class="sr-only" for="wz-preset">Apply preset</label>
+    <select id="wz-preset" class="input" name="preset_id">
+      <option value="">Apply preset…</option>
+      {% for p in presets %}<option value="{{ p.id }}">{{ p.name }} ({{ p.feature_ids|length }})</option>{% endfor %}
+    </select>
+    <button type="button" class="btn btn-primary btn-dense" hx-post="{{ wiz.url }}/preset/apply">{% icon "playlist_add_check" %}Apply</button>
+    <button type="button" class="btn btn-flat btn-primary-text btn-dense" hx-post="{{ wiz.url }}/preset/new"
+            hx-target="#modal" hx-swap="innerHTML">{% icon "bookmark_add" %}Save selection as preset</button>
+  </div>
+  {% if data.applied_presets %}
+    <div class="wz-chips"><span class="field-help">Applied presets:</span>
+      {% for a in data.applied_presets %}<span class="badge">{{ a.name }}</span>{% endfor %}</div>
+  {% endif %}
+
+  {% if data.product_type_filter and data.product_type_filter != "All" %}
+    <p class="wz-filter-note">{% icon "filter_alt" %}Filtered by product type: {{ data.product_type_filter }}</p>
+  {% endif %}
+  {% if hidden_selected %}
+    <p class="field-help">{{ hidden_selected }} selected feature(s) are hidden by the product type filter and will be dropped on Next.</p>
+  {% endif %}
+
+  {% if not feature_count %}
+    <div class="ed-empty">No features match the selected product type.</div>
+  {% else %}
+    <div class="wz-filter-row">
+      <input type="search" class="input" placeholder="Filter features…" aria-label="Filter features" x-model="q" autocomplete="off">
+      <select class="input" aria-label="Category" x-model="cat">
+        <option value="">All categories</option>
+        {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+      </select>
+    </div>
+    <label class="wz-check wz-select-all">
+      <input type="checkbox" {% if all_selected %}checked{% endif %}
+             @change="document.querySelectorAll('#wizard-form input[name=feature_ids]').forEach(c => { if (c.checked !== $event.target.checked) c.click() })">
+      <span>Select all ({{ feature_count }} features)</span>
+    </label>
+    {% include "estimations/wizard/_err.html" with msg=errors.feature_ids %}
+    {% for cat, feats in groups.items %}
+      <div class="wz-feat-group" x-show="!cat || cat === '{{ cat|escapejs }}'">
+        <h3 class="wz-group-title">{{ cat }}</h3>
+        <div class="wz-feat-head" aria-hidden="true">
+          <span>Feature</span><span>Description</span><span>Complexity</span><span>New?</span><span>Scope</span>
+        </div>
+        {% for f in feats %}
+          <div class="wz-feat-row" x-data="{ on: {{ f.checked|yesno:'true,false' }}, nw: {{ f.new|yesno:'true,false' }} }"
+               x-effect="if (!on) nw = false" data-name="{{ f.name|lower }} {{ f.description|lower }}"
+               x-show="!q || $el.dataset.name.includes(q.toLowerCase())">
+            <label class="wz-check"><input type="checkbox" name="feature_ids" value="{{ f.id }}" x-model="on"{% if f.checked %} checked{% endif %}>
+              <span class="wz-feat-name">{{ f.name }}</span></label>
+            <span class="wz-feat-desc">{{ f.description|default:"—" }}</span>
+            <span class="ed-mono wz-feat-weight" title="Complexity weight">x{{ f.weight|floatformat:1 }}</span>
+            <label class="wz-check wz-new"><input type="checkbox" name="new_feature_ids" value="{{ f.id }}" x-model="nw"
+                   :disabled="!on"{% if f.new %} checked{% endif %}{% if not f.checked %} disabled{% endif %}><span>New</span></label>
+            <span class="wz-feat-scope">
+              {% if f.is_project %}
+                <span class="badge wz-badge-project">project</span>
+                <button type="button" class="btn-round sm" title="Edit this project feature" aria-label="Edit {{ f.name }}"
+                        hx-post="{{ wiz.url }}/feature/{{ f.id }}/edit" hx-target="#modal" hx-swap="innerHTML">{% icon "edit" %}</button>
+              {% endif %}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>

@@ -1,0 +1,46 @@
+{% load presto %}
+<div class="ed-card ed-card-table">
+  <div class="ed-card-head est-card-head-pad">
+    <span class="ed-cap">Version History</span>
+    <span class="ed-card-head-meta">current · v{{ version }}</span>
+  </div>
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th scope="col">Version</th><th scope="col">Saved</th><th scope="col">Project</th><th scope="col" class="align-right">Total Hours</th><th scope="col" class="align-center">Feasibility</th><th scope="col" class="align-center">Status</th></tr></thead>
+      <tbody>
+        {% for v in versions %}
+        <tr>
+          <td><strong>v{{ v.version }}</strong>{% if v.is_current %} <span class="badge">current</span>{% endif %}</td>
+          <td>{{ v.created_at|slice:":10"|default:"—" }}</td>
+          <td class="kind-text">{{ v.project_name }}</td>
+          <td class="align-right">{{ v.grand_total_hours|floatformat:"1g" }}</td>
+          <td class="align-center">{% if v.feasibility_status %}<span class="badge est-badge est-feas-{{ v.feasibility_status }}">{{ v.feasibility_status }}</span>{% endif %}</td>
+          <td class="align-center">{% if v.status %}<span class="badge est-badge est-status-{{ v.status }}">{{ v.status }}</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="ed-card">
+  <div class="ed-card-head"><span class="ed-cap">Compare Versions</span></div>
+  {% if versions|length > 1 %}
+    <form class="est-diff-form" hx-get="/estimation/{{ est.id }}/versions/diff" hx-target="#est-diff" hx-swap="innerHTML">
+      <label class="field"><span class="field-label">Version A</span>
+        <select class="input" name="a">
+          {% for v in versions %}<option value="{{ v.version }}"{% if v.version == version_default_a %} selected{% endif %}>v{{ v.version }} — {{ v.grand_total_hours|floatformat:"1" }}h ({{ v.status }})</option>{% endfor %}
+        </select>
+      </label>
+      <label class="field"><span class="field-label">Version B</span>
+        <select class="input" name="b">
+          {% for v in versions %}<option value="{{ v.version }}"{% if v.version == version_default_b %} selected{% endif %}>v{{ v.version }} — {{ v.grand_total_hours|floatformat:"1" }}h ({{ v.status }})</option>{% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="btn btn-primary">{% icon "compare_arrows" %}Compare</button>
+    </form>
+    <div id="est-diff" class="est-diff" aria-live="polite"></div>
+  {% else %}
+    <div class="ed-empty">Only one version so far. Revising the estimation keeps a snapshot of each version.</div>
+  {% endif %}
+</div>

@@ -1,0 +1,114 @@
+{% load presto %}
+<div class="wz-delivery" x-data="{
+    t: {{ team_json }}, k: 0,
+    wd: '{{ data.working_days }}', ts: '{{ data.testing_start_date|default:''|escapejs }}', dl: '{{ data.expected_delivery|default:''|escapejs }}', auto: '',
+    init() { this.t.rows.forEach(r => r.k = ++this.k) },
+    calc() {
+      if (!this.ts || !this.dl) { this.auto = ''; return }
+      const s = new Date(this.ts + 'T00:00:00'), e = new Date(this.dl + 'T00:00:00'); let n = 0;
+      for (const c = new Date(s); c <= e; c.setDate(c.getDate() + 1)) { const w = c.getDay(); if (w > 0 && w < 6) n++ }
+      if (n > 0) { this.wd = String(n); this.auto = 'Auto-calculated: ' + n + ' working days between dates' } else { this.auto = '' }
+    },
+    pickTeam() {
+      if (!this.t.team) return;
+      this.t.rows = this.t.members.filter(m => String(m.team) === this.t.team)
+        .map(m => ({ k: ++this.k, member: String(m.id), role: m.role === 'LEADER' ? 'LEADER' : 'TESTER', hours: 0 }));
+    },
+    add() { this.t.rows.push({ k: ++this.k, member: '', role: 'TESTER', hours: 0 }) } }">
+  <div class="wz-three">
+    <div class="field">
+      <label class="field-label" for="wz-start">{{ labels.start }}</label>
+      <input id="wz-start" class="input" type="date" name="start_date" value="{{ data.start_date|default:'' }}"{% if errors.start_date %} aria-invalid="true"{% endif %}>
+      {% include "estimations/wizard/_err.html" with msg=errors.start_date %}
+    </div>
+    <div class="field">
+      <label class="field-label" for="wz-tstart">{{ labels.testing }}</label>
+      <input id="wz-tstart" class="input" type="date" name="testing_start_date" x-model="ts" @change="calc()"{% if errors.testing_start_date %} aria-invalid="true"{% endif %}>
+      {% include "estimations/wizard/_err.html" with msg=errors.testing_start_date %}
+    </div>
+    <div class="field">
+      <label class="field-label" for="wz-deadline">{{ labels.deadline }}</label>
+      <input id="wz-deadline" class="input" type="date" name="expected_delivery" x-model="dl" @change="calc()"{% if errors.expected_delivery %} aria-invalid="true"{% endif %}>
+      {% include "estimations/wizard/_err.html" with msg=errors.expected_delivery %}
+    </div>
+  </div>
+  <div class="wz-three">
+    <div class="field">
+      <label class="field-label" for="wz-wd">Working Days Available</label>
+      <input id="wz-wd" class="input" type="number" min="1" step="1" name="working_days" x-model="wd"{% if errors.working_days %} aria-invalid="true"{% endif %}>
+      <span class="field-help wz-auto" x-show="auto" x-text="auto"></span>
+      {% include "estimations/wizard/_err.html" with msg=errors.working_days %}
+    </div>
+    <div class="field">
+      <label class="field-label" for="wz-ts">Team Size (testers)</label>
+      <input id="wz-ts" class="input" type="number" min="1" step="1" name="team_size" value="{{ data.team_size }}"{% if errors.team_size %} aria-invalid="true"{% endif %}>
+      {% include "estimations/wizard/_err.html" with msg=errors.team_size %}
+    </div>
+    <div class="field">
+      <label class="field-label" for="wz-rel">Expected Releases</label>
+      <input id="wz-rel" class="input" type="number" min="1" step="1" name="expected_releases" value="{{ data.expected_releases }}"
+             title="Number of releases within this estimation period. Each additional release adds extra effort for regression and deployment."{% if errors.expected_releases %} aria-invalid="true"{% endif %}>
+      {% include "estimations/wizard/_err.html" with msg=errors.expected_releases %}
+    </div>
+  </div>
+  <p class="field-help">Working days are used only for the feasibility / capacity check — they do NOT change the calculated
+    effort. The proposed delivery duration is the Proposed Duration (elapsed) shown at the Review step.</p>
+  <label class="switch wz-leader"><input type="checkbox" class="switch-input" name="has_leader"{% if data.has_leader %} checked{% endif %}>
+    <span class="switch-track" aria-hidden="true"></span><span>Include Test Leader effort</span></label>
+
+  {% if teams %}
+    <div class="wz-sep"></div>
+    <h3 class="wz-sub">Team (optional)</h3>
+    <div class="field wz-narrow">
+      <label class="field-label" for="wz-team">Select Team</label>
+      <select id="wz-team" class="input" name="team_id" x-model="t.team" @change="pickTeam()">
+        <option value="">-- No Team --</option>
+        {% for team in teams %}<option value="{{ team.id }}"{% if team.id == data.team_id %} selected{% endif %}>{{ team.name }}</option>{% endfor %}
+      </select>
+      <span class="field-help">Picking a team fills the allocation rows below with its members.</span>
+    </div>
+  {% endif %}
+
+  {% if has_members %}
+    <div class="wz-sep"></div>
+    <h3 class="wz-sub">Team Allocation (optional)</h3>
+    <div class="wz-info">
+      <div class="wz-info-title">How team parameters affect the calculation:</div>
+      <ul>
+        <li>Team Size and Include Leader determine capacity (= working_days x (testers + leader) x hours/day) for feasibility.</li>
+        <li>Feasibility: &lt;=80% = Feasible, 80-100% = At Risk, &gt;100% = Not Feasible.</li>
+        <li>Team Allocation below is optional planning metadata — it records who works on the estimation but does not change calculated totals.</li>
+      </ul>
+    </div>
+    <template x-for="(r, i) in t.rows" :key="r.k">
+      <div class="wz-alloc-row">
+        <select class="input" name="alloc_member" aria-label="Member">
+          <option value="">Member…</option>
+          <template x-for="m in t.members" :key="m.id"><option :value="String(m.id)" x-text="m.name + ' (' + m.role + ')'" :selected="String(m.id) === r.member"></option></template>
+        </select>
+        <select class="input" name="alloc_role" aria-label="Role">
+          <option value="TESTER" :selected="r.role === 'TESTER'">TESTER</option>
+          <option value="LEADER" :selected="r.role === 'LEADER'">LEADER</option>
+        </select>
+        <input class="input" type="number" min="0" step="1" name="alloc_hours" x-model="r.hours" aria-label="Hours">
+        <button type="button" class="btn-round sm wz-remove" @click="t.rows.splice(i, 1)" aria-label="Remove member">{% icon "close" %}</button>
+      </div>
+    </template>
+    <button type="button" class="btn btn-flat btn-primary-text btn-dense" @click="add()">{% icon "add" %}Add Team Member</button>
+  {% endif %}
+
+  {% if risk_groups %}
+    <div class="wz-sep"></div>
+    <h3 class="wz-sub">Risk Items (optional)</h3>
+    <p class="field-help">Select applicable risks for this estimation.</p>
+    {% for cat, items in risk_groups.items %}
+      <div class="wz-risk-group">
+        <div class="wz-group-title">{{ cat }}</div>
+        {% for r in items %}
+          <label class="wz-check"><input type="checkbox" name="risk_item_ids" value="{{ r.id }}"{% if r.checked %} checked{% endif %}>
+            <span>{{ r.name }}</span>{% if r.likelihood or r.impact %}<span class="ed-mono field-help">[{{ r.likelihood|default:"?" }}/{{ r.impact|default:"?" }}]</span>{% endif %}</label>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>

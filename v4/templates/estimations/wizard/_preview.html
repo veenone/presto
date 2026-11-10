@@ -1,0 +1,79 @@
+{% load presto %}
+<input type="hidden" name="_tasks" value="1">
+<h3 class="wz-sub">Calculation Results</h3>
+<div class="wz-feas">
+  <span>Feasibility:</span>
+  <span class="badge wz-feas-{{ res.feasibility_status|lower }}">{{ res.feasibility_status }}</span>
+  <span class="field-help">({{ res.utilization_pct|floatformat:1 }}% utilization)</span>
+  {% if completion_date %}<span class="wz-completion">{% icon "event_available" %}Estimated completion <strong class="ed-mono">{{ completion_date|date:"Y-m-d" }}</strong></span>{% endif %}
+</div>
+<div class="wz-hours">
+  {% include "estimations/wizard/_hours_card.html" with label="Tester Hours" value=res.total_tester_hours icon="person" %}
+  {% include "estimations/wizard/_hours_card.html" with label="Leader Hours" value=res.total_leader_hours icon="manage_accounts" %}
+  {% include "estimations/wizard/_hours_card.html" with label="PR Fix Hours" value=res.pr_fix_hours icon="bug_report" %}
+  {% if res.pr_no_test_hours > 0 %}{% include "estimations/wizard/_hours_card.html" with label="PR Test Creation" value=res.pr_no_test_hours icon="science" %}{% endif %}
+  {% include "estimations/wizard/_hours_card.html" with label="Study Hours" value=res.study_hours icon="school" %}
+  {% if res.release_extra_hours > 0 %}{% include "estimations/wizard/_hours_card.html" with label="Release Extra Hours" value=res.release_extra_hours icon="rocket_launch" %}{% endif %}
+  {% if res.documentation_hours > 0 %}{% include "estimations/wizard/_hours_card.html" with label="Documentation Hours" value=res.documentation_hours icon="description" %}{% endif %}
+  {% include "estimations/wizard/_hours_card.html" with label="Buffer Hours" value=res.buffer_hours icon="security" %}
+  {% include "estimations/wizard/_hours_card.html" with label="Grand Total Hours" value=res.grand_total_hours icon="summarize" %}
+  {% include "estimations/wizard/_hours_card.html" with label="Grand Total (Person-Days)" value=res.grand_total_days icon="calendar_today" %}
+  {% if working_weeks > 0 %}{% include "estimations/wizard/_hours_card.html" with label="Working Weeks" value=working_weeks icon="date_range" %}{% endif %}
+  {% if res.capacity_hours > 0 %}{% include "estimations/wizard/_hours_card.html" with label="Capacity Hours" value=res.capacity_hours icon="fitness_center" %}{% endif %}
+</div>
+
+{% if res.elapsed_days > 0 %}
+  <h3 class="wz-sub">Proposed Duration (elapsed, wall-clock)</h3>
+  <p class="field-help">The actual time to deliver given the team — use this as the estimation proposal. Parallelizable tasks
+    are divided by team size; sequential tasks are not. (Working Days Available is only a feasibility input and does not affect this.)</p>
+  <div class="wz-hours">
+    {% include "estimations/wizard/_hours_card.html" with label="Elapsed Hours" value=res.elapsed_hours icon="hourglass_top" %}
+    {% include "estimations/wizard/_hours_card.html" with label="Elapsed Days" value=res.elapsed_days icon="today" %}
+    {% include "estimations/wizard/_hours_card.html" with label="Elapsed Weeks" value=res.elapsed_weeks icon="date_range" %}
+  </div>
+{% endif %}
+
+{% if flags %}
+  <h3 class="wz-sub">Risk Flags</h3>
+  <div class="wz-chips">{% for f in flags %}<span class="wz-flag">{% icon "warning" %}{{ f }}</span>{% endfor %}</div>
+{% endif %}
+{% if res.risk_messages %}
+  <details class="wz-expansion"><summary>{% icon "info" %}Risk Details · {{ res.risk_messages|length }}</summary>
+    <ul class="wz-risk-list">{% for m in res.risk_messages %}<li>{{ m }}</li>{% endfor %}</ul>
+  </details>
+{% endif %}
+
+{% if tasks or synthetic_tasks %}
+  <h3 class="wz-sub">Task Breakdown <span class="ed-mono field-help">· {{ task_count }}</span></h3>
+  <div class="ed-card ed-card-table wz-tasks"><div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th>Feature</th><th>Task</th><th>Type</th><th class="num">Base h</th><th>Formula</th><th class="num">Calc h</th><th class="align-center">Resources</th></tr></thead>
+      <tbody>
+        {% for t in tasks %}
+          <tr>
+            <td>{% if t.feature_name %}<span class="badge wz-badge-feature">{{ t.feature_name }}</span>{% else %}<span class="muted wz-global">Global</span>{% endif %}</td>
+            <td>{{ t.name }}</td>
+            <td class="ed-mono">{{ t.task_type }}</td>
+            <td class="num ed-mono">{{ t.base_hours|floatformat:1 }}</td>
+            <td class="ed-mono wz-formula">{{ t.formula|default:"" }}</td>
+            <td class="num ed-mono">{{ t.calculated_hours|floatformat:1 }}</td>
+            <td class="align-center"><input type="hidden" name="tt_name" value="{{ t.name }}">
+              <input class="input wz-count-input" type="number" min="1" step="1" name="tt_value" value="{{ t.testers }}" aria-label="Resources for {{ t.name }}"></td>
+          </tr>
+        {% endfor %}
+        {% for t in synthetic_tasks %}
+          <tr class="wz-synthetic">
+            <td><span class="muted wz-global">Synthetic</span></td>
+            <td>{{ t.task_name }}{% if t.pending %} <span class="field-help">(added on save)</span>{% endif %}<div class="field-help">{{ t.notes }}</div></td>
+            <td class="ed-mono">{{ t.task_type }}</td>
+            <td class="num ed-mono">{{ t.base_hours|floatformat:1 }}</td>
+            <td></td>
+            <td class="num ed-mono">{{ t.calculated_hours|floatformat:1 }}</td>
+            <td class="align-center muted">—</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+{% endif %}
+<div id="wz-rail-total" hx-swap-oob="innerHTML">{% include "estimations/wizard/_rail_total.html" %}</div>

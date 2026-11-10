@@ -1,0 +1,22 @@
+{% load presto %}
+{% if custom_features %}
+  <div class="wz-custom">
+    <h3 class="wz-sub">Custom features for this project</h3>
+    <p class="field-help">These exist only in this estimation. Request adding any of them to the global catalog for future reuse.</p>
+    {% for f in custom_features %}
+      <div class="wz-custom-row">
+        <span>{{ f.name }}</span>{% if f.category %}<span class="field-help">· {{ f.category }}</span>{% endif %}
+        <div class="ed-toolbar-grow"></div>
+        {% if can_promote %}
+          <button type="button" class="btn btn-flat btn-primary-text btn-dense" hx-post="{{ wiz.url }}/feature/{{ f.id }}/promote"
+                  hx-target="#wz-custom" hx-swap="innerHTML">{% icon "public" %}Promote to global</button>
+        {% elif f.promotion_requested %}
+          <span class="badge wz-badge-ok">requested</span>
+        {% else %}
+          <button type="button" class="btn btn-outline btn-dense" hx-post="{{ wiz.url }}/feature/{{ f.id }}/request-promotion"
+                  hx-target="#wz-custom" hx-swap="innerHTML">{% icon "upgrade" %}Request to add to global</button>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

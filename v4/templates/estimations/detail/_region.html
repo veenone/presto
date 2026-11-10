@@ -1,0 +1,97 @@
+{% load presto %}
+{# Refreshable region: actions trigger "est-refresh"; controls inside give their own hx-target. #}
+<div id="est-detail" hx-get="/estimation/{{ est.id }}" hx-trigger="est-refresh from:body" hx-target="this"
+     hx-swap="outerHTML" hx-disinherit="*">
+
+  {# 1. Sticky action toolbar (v3 order) #}
+  <div class="ed-toolbar est-toolbar">
+    <a class="btn-round" href="/estimations" title="Back to estimations" aria-label="Back to estimations">{% icon "arrow_back" %}</a>
+    <span class="est-toolbar-sep" aria-hidden="true"></span>
+    {% if edit_action %}
+      <a class="btn btn-flat btn-dense est-tone-orange" href="/estimation/{{ est.id }}/edit" title="{{ edit_action.title }}">{% icon "edit" %}{{ edit_action.label }}</a>
+    {% endif %}
+    {% if perms.export and est.request_id %}
+      <button type="button" class="btn btn-flat btn-dense est-tone-accent" hx-post="/estimation/{{ est.id }}/export"
+              hx-swap="none" title="Send the result to the linked request's system">{% icon "cloud_upload" %}Export to External</button>
+    {% endif %}
+    {% if perms.export %}
+      <button type="button" class="btn btn-flat btn-dense est-tone-teal" hx-get="/estimation/{{ est.id }}/export-tasks"
+              hx-target="#modal">{% icon "account_tree" %}Export Tasks</button>
+    {% endif %}
+    {% if version > 1 %}
+      <button type="button" class="btn btn-flat btn-dense" @click="tab = 'versions'">{% icon "compare_arrows" %}Compare ({{ version }} versions)</button>
+    {% endif %}
+    <div class="ed-toolbar-grow"></div>
+    <div class="ed-status-now est-status-pill ed-status-{{ feasibility }} ed-status-{{ status }}" id="est-status-pill">
+      <span class="ed-status-dot"></span><span>{{ feasibility|default:"UNKNOWN" }} · {{ status }}</span>
+    </div>
+  </div>
+
+  {# 2. Hero: identity + grand total #}
+  <section class="est-hero" aria-label="Summary">
+    <div class="est-hero-stripe est-stripe-{{ stripe }}"></div>
+    <div class="est-hero-left">
+      <div class="est-hero-meta">
+        <span class="ed-eyebrow">Estimation</span>
+        {% if number %}<span class="est-num-pill">{{ number }}</span>{% endif %}
+        {% if version > 1 %}<span class="est-ver-pill">v{{ version }}</span>{% endif %}
+        {% if est.project_type %}<span class="est-ptype">· {{ est.project_type }}</span>{% endif %}
+        {% if d.request_number %}<span class="est-ptype">· {{ d.request_number }}</span>{% endif %}
+      </div>
+      <h1 class="est-hero-title">{{ est.project_name|default:"Estimation" }}</h1>
+      {% if hero_sub %}<div class="est-hero-sub">{{ hero_sub }}</div>{% endif %}
+    </div>
+    <div class="est-hero-right">
+      <div class="ed-eyebrow">Grand Total</div>
+      <div class="est-hero-bignum" data-testid="grand-total">{{ est.grand_total_hours|floatformat:"0g" }}</div>
+      <div class="est-hero-unit">hours · {{ est.grand_total_days|floatformat:"1g" }} days · {{ weeks|floatformat:"1g" }} weeks</div>
+      {% if est.estimated_completion_date %}
+        <div class="est-hero-completion"><span class="est-hero-completion-label">Est. Completion</span><span class="ed-mono">{{ est.estimated_completion_date|date:"Y-m-d" }}</span></div>
+      {% endif %}
+    </div>
+  </section>
+
+  {# 3. Tabs #}
+  <div class="est-tabs" role="tablist" aria-label="Estimation sections">
+    <button type="button" role="tab" class="est-tab" :class="tab === 'overview' && 'active'" :aria-selected="(tab === 'overview').toString()" @click="tab = 'overview'">{% icon "dashboard" %}Overview</button>
+    <button type="button" role="tab" class="est-tab" :class="tab === 'tasks' && 'active'" :aria-selected="(tab === 'tasks').toString()" @click="tab = 'tasks'">{% icon "checklist" %}Tasks ({{ tab_counts.tasks }})</button>
+    <button type="button" role="tab" class="est-tab" :class="tab === 'docs' && 'active'" :aria-selected="(tab === 'docs').toString()" @click="tab = 'docs'">{% icon "description" %}Documents ({{ tab_counts.docs }})</button>
+    <button type="button" role="tab" class="est-tab" :class="tab === 'prs' && 'active'" :aria-selected="(tab === 'prs').toString()" @click="tab = 'prs'">{% icon "bug_report" %}PR Fixes ({{ tab_counts.prs }})</button>
+    <button type="button" role="tab" class="est-tab" :class="tab === 'team' && 'active'" :aria-selected="(tab === 'team').toString()" @click="tab = 'team'">{% icon "groups" %}Team ({{ tab_counts.team }})</button>
+    <button type="button" role="tab" class="est-tab" :class="tab === 'risks' && 'active'" :aria-selected="(tab === 'risks').toString()" @click="tab = 'risks'">{% icon "warning" %}Risks ({{ tab_counts.risks }})</button>
+    <button type="button" role="tab" class="est-tab" :class="tab === 'versions' && 'active'" :aria-selected="(tab === 'versions').toString()" @click="tab = 'versions'">{% icon "history" %}Versions ({{ tab_counts.versions }})</button>
+    <button type="button" role="tab" class="est-tab" :class="tab === 'workflow' && 'active'" :aria-selected="(tab === 'workflow').toString()" @click="tab = 'workflow'">{% icon "account_tree" %}Workflow</button>
+  </div>
+
+  <div class="est-panels">
+    <div role="tabpanel" x-show="tab === 'overview'" data-panel="overview">{% include "estimations/detail/_tab_overview.html" %}</div>
+    <div role="tabpanel" x-show="tab === 'tasks'" x-cloak data-panel="tasks">{% include "estimations/detail/_tab_tasks.html" %}</div>
+    <div role="tabpanel" x-show="tab === 'docs'" x-cloak data-panel="docs">{% include "estimations/detail/_tab_docs.html" %}</div>
+    <div role="tabpanel" x-show="tab === 'prs'" x-cloak data-panel="prs">{% include "estimations/detail/_tab_prs.html" %}</div>
+    <div role="tabpanel" x-show="tab === 'team'" x-cloak data-panel="team">{% include "estimations/detail/_tab_team.html" %}</div>
+    <div role="tabpanel" x-show="tab === 'risks'" x-cloak data-panel="risks">{% include "estimations/detail/_tab_risks.html" %}</div>
+    <div role="tabpanel" x-show="tab === 'versions'" x-cloak data-panel="versions">{% include "estimations/detail/_tab_versions.html" %}</div>
+    <div role="tabpanel" x-show="tab === 'workflow'" x-cloak data-panel="workflow">{% include "estimations/detail/_tab_workflow.html" %}</div>
+  </div>
+
+  {# 4. Footer: download reports and report actions #}
+  <section class="est-download" aria-label="Reports">
+    <div>
+      <div class="ed-eyebrow">Export</div>
+      <h2 class="est-dl-title">Download report</h2>
+      <div class="est-dl-sub">A formatted summary of this estimation in your preferred format.</div>
+    </div>
+    <div class="est-dl-actions">
+      <a class="btn btn-outline est-dl-btn est-tone-positive" href="/estimation/{{ est.id }}/report/xlsx" download>{% icon "table_chart" %}Excel</a>
+      <a class="btn btn-outline est-dl-btn tone-primary" href="/estimation/{{ est.id }}/report/docx" download>{% icon "description" %}Word</a>
+      <a class="btn btn-outline est-dl-btn est-tone-negative" href="/estimation/{{ est.id }}/report/pdf" download>{% icon "picture_as_pdf" %}PDF</a>
+      <a class="btn btn-outline est-dl-btn" href="/estimation/{{ est.id }}/report/executive-summary" download>{% icon "summarize" %}Executive summary</a>
+    </div>
+    <div class="est-dl-more">
+      {% if perms.send_report %}
+        <button type="button" class="btn btn-flat btn-dense" hx-get="/estimation/{{ est.id }}/send-report" hx-target="#modal">{% icon "mail" %}Send by email</button>
+      {% endif %}
+      <button type="button" class="btn btn-flat btn-dense" hx-get="/estimation/{{ est.id }}/compare" hx-target="#modal">{% icon "compare" %}Compare with another estimation</button>
+    </div>
+  </section>
+</div>

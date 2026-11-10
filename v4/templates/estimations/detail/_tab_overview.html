@@ -1,0 +1,62 @@
+{% load presto %}
+<div class="ed-card">
+  <div class="ed-card-head"><span class="ed-cap">Project Specification</span></div>
+  <dl class="est-spec">
+    {% for row in spec %}
+      <div class="est-spec-row{% if row.long %} long{% endif %}">
+        <dt class="est-spec-label">{{ row.label }}</dt>
+        <dd class="est-spec-value{% if row.long %} long{% endif %}">{{ row.value|linebreaksbr }}</dd>
+      </div>
+    {% endfor %}
+  </dl>
+</div>
+
+<div class="ed-card">
+  <div class="ed-card-head">
+    <span class="ed-cap">Hours Breakdown</span>
+    <span class="ed-card-head-meta">TOTAL · {{ est.grand_total_hours|floatformat:"1g" }}h</span>
+  </div>
+  {% for bar in bars %}
+    <div class="est-bar-row">
+      <div class="est-bar-label">{% icon bar.icon "est-bar-icon" %}<span>{{ bar.label }}</span></div>
+      <div class="est-bar-track"><div class="est-bar-fill" style="width: {{ bar.pct }}%"></div></div>
+      <div class="est-bar-value">{{ bar.value|floatformat:"1g" }}h</div>
+    </div>
+  {% endfor %}
+  <div class="est-bar-row total">
+    <div class="est-bar-label">{% icon "summarize" "est-bar-icon" %}<span>Grand Total</span></div>
+    <div class="est-bar-track"><div class="est-bar-fill" style="width: 100%"></div></div>
+    <div class="est-bar-value">{{ est.grand_total_hours|floatformat:"1g" }}h</div>
+  </div>
+</div>
+
+{% if est.elapsed_days > 0 %}
+<div class="ed-card">
+  <div class="ed-card-head">
+    <span class="ed-cap">Proposed Duration · Wall Clock</span>
+    <span class="ed-eyebrow">parallelizable ÷ team · sequential by one</span>
+  </div>
+  <div class="ed-strip">
+    <div class="ed-strip-cell"><div class="ed-eyebrow">Elapsed Hours</div><div class="ed-strip-num">{{ est.elapsed_hours|floatformat:"1g" }}<span class="est-strip-unit">h</span></div></div>
+    <div class="ed-strip-cell"><div class="ed-eyebrow">Elapsed Days</div><div class="ed-strip-num">{{ est.elapsed_days|floatformat:"1g" }}<span class="est-strip-unit">d</span></div></div>
+    <div class="ed-strip-cell"><div class="ed-eyebrow">Elapsed Weeks</div><div class="ed-strip-num">{{ est.elapsed_weeks|floatformat:"1g" }}<span class="est-strip-unit">w</span></div></div>
+    {% if est.estimated_completion_date %}
+      <div class="ed-strip-cell"><div class="ed-eyebrow">Est. Completion</div><div class="est-strip-date">{{ est.estimated_completion_date|date:"Y-m-d" }}</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if risks.items %}
+<div class="ed-card">
+  <div class="ed-card-head">
+    <span class="ed-cap">Associated Risks</span>
+    <span class="ed-card-head-meta">{{ risks.items|length }} flagged</span>
+  </div>
+  <div class="est-chips">
+    {% for r in risks.items %}
+      <span class="est-chip">{% icon "warning" %}{% if r.risk_item_category %}{{ r.risk_item_category }}: {% endif %}{{ r.risk_item_name|default:"Risk" }}</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

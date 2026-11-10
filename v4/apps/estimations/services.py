@@ -861,3 +861,75 @@ def create_project_feature(estimation: Estimation, fields: dict[str, Any], user:
         cat_label = category or "(no category)"
         raise ServiceError(409, f"This project already has a feature '{name}' in category '{cat_label}'.")
     return Feature.objects.create(**fields, is_global=False, owner_estimation=estimation)
+
+
+# ── Wizard helpers (HTML wizard; the API does not use these) ──
+
+
+def can_edit_draft(estimation: Estimation, user: User) -> bool:
+    """Same author-or-ADMIN rule ``edit_draft`` enforces."""
+    return _is_author_or_admin(estimation, user)
+
+
+def estimated_completion_date(testing_start_date: str | None, elapsed_days: float) -> date | None:
+    """Completion date the estimation will get for these inputs (public ``_completion_date``)."""
+    return _completion_date(testing_start_date, elapsed_days)
+
+
+def _iso(value) -> str | None:
+    return value.isoformat() if value else None
+
+
+def wizard_payload(estimation: Estimation) -> dict[str, Any]:
+    """Rebuild the full wizard payload (``EstimationCreate`` shape) from a saved estimation.
+
+    Combines the ``wizard_inputs`` snapshot with the columns and child rows the
+    snapshot does not hold (team allocations, risks, per-task testers), so a
+    save without changes reproduces the same numbers.
+    """
+    w = estimation.wizard_inputs if isinstance(estimation.wizard_inputs, dict) else {}
+    pr = w.get("pr_fixes") if isinstance(w.get("pr_fixes"), dict) else {}
+    tasks = list(estimation.tasks.order_by("id"))
+    has_leader = w.get("has_leader")
+    if has_leader is None:
+        has_leader = any(t.has_leader_support for t in tasks)
+    return {
+        "project_name": estimation.project_name or "",
+        "project_type": estimation.project_type or "EVOLUTION",
+        "feature_ids": list(w.get("feature_ids") or []),
+        "new_feature_ids": list(w.get("new_feature_ids") or []),
+        "reference_project_ids": list(w.get("reference_project_ids") or estimation.reference_project_ids or []),
+        "dut_ids": list(w.get("dut_ids") or []),
+        "profile_ids": list(w.get("profile_ids") or []),
+        "dut_profile_matrix": [list(p) for p in (w.get("dut_profile_matrix") or [])],
+        "pr_fixes": {
+            "simple": int(pr.get("simple") or 0),
+            "medium": int(pr.get("medium") or 0),
+            "complex": int(pr.get("complex") or 0),
+        },
+        "pr_details": list(w.get("pr_details") or []),
+        "team_size": int(w.get("team_size") or 1),
+        "has_leader": bool(has_leader),
+        "start_date": _iso(estimation.start_date) or w.get("start_date"),
+        "expected_delivery": _iso(estimation.expected_delivery),
+        "working_days": int(w.get("working_days") or 20),
+        "team_allocations": [
+            {"team_member_id": a.team_member_id, "role": a.role or "TESTER",
+             "allocated_hours": a.allocated_hours}
+            for a in estimation.team_allocations.order_by("id")
+        ],
+        "expected_releases": int(w.get("expected_releases") or estimation.expected_releases or 1),
+        "project_goals": estimation.project_goals or None,
+        "target_customer": estimation.target_customer or None,
+        "project_reference": estimation.project_reference or None,
+        "team_id": estimation.team_id,
+        "risk_item_ids": list(estimation.risks.order_by("id").values_list("risk_item_id", flat=True)),
+        "document_type_ids": list(w.get("document_type_ids") or []),
+        "document_counts": dict(w.get("document_counts") or {}),
+        "task_assigned_testers": {t.task_name: t.assigned_testers for t in tasks if t.assigned_testers != 1},
+        "testing_start_date": w.get("testing_start_date"),
+        "product_type_filter": w.get("product_type_filter") or "All",
+        "applied_presets": list(w.get("applied_presets") or []),
+        "request_id": estimation.request_id,
+        "created_by": estimation.created_by,
+    }

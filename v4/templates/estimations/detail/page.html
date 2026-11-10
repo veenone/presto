@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+{# Tab state lives outside the refreshable region so it survives est-refresh swaps; the hash keeps it across reloads. #}
+<div class="est-detail"
+     x-data="{ tab: ['overview','tasks','docs','prs','team','risks','versions','workflow'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview' }"
+     x-init="$watch('tab', v => history.replaceState(null, '', '#' + v))">
+  {% include "estimations/detail/_region.html" %}
+</div>
+{% endblock %}

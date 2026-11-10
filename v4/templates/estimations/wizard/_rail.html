@@ -1,0 +1,15 @@
+<aside class="wz-rail" aria-label="Estimation summary">
+  <div class="ed-eyebrow">Estimation</div>
+  <div class="wz-rail-title">{{ rail.title }}</div>
+  {% for section in rail.sections %}
+    <div class="wz-rail-section">
+      {% for label, value in section %}
+        <div class="wz-rail-row">
+          <span class="wz-rail-label">{{ label }}</span>
+          <span class="wz-rail-value{% if not value %} empty{% endif %}">{{ value|default:"—" }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+  <div class="wz-rail-total" id="wz-rail-total">{% include "estimations/wizard/_rail_total.html" %}</div>
+</aside>

@@ -1,0 +1,26 @@
+{% load presto %}
+<div class="ed-card ed-card-table">
+  <div class="ed-card-head est-card-head-pad">
+    <span class="ed-cap">Team Allocation</span>
+    <span class="ed-card-head-meta">{{ allocations|length }} member{{ allocations|length|pluralize }} · {{ alloc_total|floatformat:"1g" }}h</span>
+  </div>
+  {% if allocations %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th scope="col">Member</th><th scope="col">Role</th><th scope="col" class="align-right">Hours</th><th scope="col">Share</th></tr></thead>
+      <tbody>
+        {% for a in allocations %}
+        <tr>
+          <td class="kind-strong"><strong>{{ a.team_member_name|default:"Unknown" }}</strong></td>
+          <td class="kind-text">{{ a.role|default:"—" }}</td>
+          <td class="align-right">{{ a.allocated_hours|floatformat:"1g" }}</td>
+          <td class="est-share-cell">{% if alloc_total %}<div class="est-bar-track"><div class="est-bar-fill" style="width: {% widthratio a.allocated_hours alloc_total 100 %}%"></div></div>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="ed-empty">No team allocations</div>
+  {% endif %}
+</div>

@@ -1,0 +1,12 @@
+<div class="wz-refs">
+  {% for p in projects %}
+    <label class="wz-check wz-ref-row">
+      <input type="checkbox" name="reference_project_ids" value="{{ p.id }}"{% if p.checked %} checked{% endif %}>
+      <span class="wz-ref-name">{{ p.name }}</span>
+      <span class="badge">{{ p.type }}</span>
+      <span class="ed-mono wz-ref-acc">{% if p.accuracy is not None %}accuracy ratio: {{ p.accuracy|floatformat:2 }}{% else %}(no accuracy data){% endif %}</span>
+    </label>
+  {% empty %}
+    <div class="ed-empty">No historical projects available.</div>
+  {% endfor %}
+</div>

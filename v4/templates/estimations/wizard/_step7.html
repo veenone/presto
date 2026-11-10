@@ -1,0 +1,11 @@
+<h3 class="wz-sub">Summary</h3>
+<div class="wz-summary">
+  {% for label, value in summary %}
+    <div class="wz-summary-card"><div class="ed-cap">{{ label }}</div><div class="wz-summary-value">{{ value }}</div></div>
+  {% endfor %}
+</div>
+<div id="wz-custom">{% include "estimations/wizard/_custom_features.html" %}</div>
+<div id="wz-preview" class="wz-preview" hx-post="{{ wiz.url }}/preview" hx-trigger="load" hx-target="this" hx-swap="innerHTML"
+     aria-live="polite">
+  <p class="field-help">Calculating…</p>
+</div>
