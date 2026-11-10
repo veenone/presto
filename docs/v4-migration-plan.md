@@ -1,6 +1,6 @@
 # PRESTO v4 — Migration Plan: Django + HTMX + Alpine.js
 
-**Status:** In progress (rev. 4: Phases 0, 1 and 2 complete, see §17)
+**Status:** In progress (rev. 5: Phases 0 to 3 complete, see §17)
 **Date:** 2026-11-09
 **Baseline:** v3.4.0 (FastAPI + SQLAlchemy backend, NiceGUI / Streamlit / C# WinForms frontends)
 
@@ -774,3 +774,25 @@ Known follow-ups:
 
 - Uploaded logos (SVG allowed, ADMIN only) and attachments are served by Django; move to nginx or WhiteNoise in Phase 7.
 - `GET /estimations` builds the full payload per row, as v3 did; optimise if lists grow large.
+
+### Phase 3 — done (2026-11-10)
+
+Web UI shell in `v4/` with Django templates, htmx 2.0.4 and Alpine.js 3.14.9 (vendored, no CDN). Screenshots: `docs/v4-screenshots/phase3/`.
+
+| Area | Delivered |
+|------|-----------|
+| Layout | Sidebar ported from v3 (logo, user card, collapsible sections, footer), drawer toggle, phone layout with slide-in menu |
+| Sign-in | Local and LDAP (Internal/LDAP switch when LDAP is configured), single sign-on through OIDC, logout, password change |
+| Access | Sign-in gate for all pages (JSON API untouched), v3 menu rules from the 18-permission matrix, admin-only pages return 403 |
+| Theme | Light/dark with the D6 order (user setting, browser, OS, dark); Settings colour keys become CSS variables |
+| Notifications | Bell badge polled every 30 s, panel with mark read and mark all read |
+| Errors | 400/403/404/500 pages in the v3 wording, CSRF failure page, htmx error toasts, session expiry redirect |
+| Pages | Every v3 URL answers now; pages not yet rebuilt show a placeholder with the same access rule |
+
+Verification: 777 tests pass (48 new for the shell); browser run in both themes, at desktop and phone width, with no console errors other than intended 401/403/404 responses. The browser run caught a bug that the tests had missed (mark-as-read answered 405), now fixed with a status assertion added.
+
+Changes from the plan:
+
+- `verify_credentials()` was split out of the API login so the web sign-in reuses the same local/LDAP flow and audit entries without issuing API tokens.
+- Material Symbols (variable font, 3.3 MB) is vendored whole so later pages can use any icon.
+- Text on primary-coloured buttons is computed from the configured colour (v3 always used white, unreadable on the default dark-mode light blue).

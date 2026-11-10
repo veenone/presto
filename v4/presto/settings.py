@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.integrations",
     "apps.notifications",
     "apps.api",
+    "apps.web",
 ]
 
 MIDDLEWARE = [
@@ -58,6 +59,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "apps.web.middleware.PageLoginRequiredMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -73,6 +75,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.web.context_processors.shell",
             ],
         },
     },
@@ -95,6 +98,7 @@ USE_I18N = False
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT") or BASE_DIR / "data")
 # Branding uploads (logo), served at /api/static/uploads/ as in v3.
@@ -105,7 +109,13 @@ ATTACHMENTS_DIR = Path(os.environ.get("ATTACHMENTS_DIR") or MEDIA_ROOT / "attach
 # Seed data shared with v3 until v4 replaces it at the repo root.
 SEED_DATA_PATH = Path(os.environ.get("SEED_DATA_PATH") or REPO_DIR / "data" / "seed_data.json")
 
+LOGIN_URL = "/login"
+LOGIN_REDIRECT_URL = "/"
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE = int(os.environ.get("SESSION_COOKIE_AGE", 60 * 60 * 12))  # 12 h
+SESSION_COOKIE_SECURE = _env_bool("SECURE_COOKIES", False)
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+CSRF_FAILURE_VIEW = "apps.web.views.csrf_failure"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 LOGGING = {

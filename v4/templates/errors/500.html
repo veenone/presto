@@ -1,0 +1,19 @@
+{% load static %}<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Server Error · PRESTO</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  <div class="error-page">
+    <div class="error-card tone-negative" role="alert">
+      <span class="icon" aria-hidden="true">error_outline</span>
+      <div class="error-code">ERROR 500</div>
+      <h1 class="error-title">Server Error</h1>
+      <p class="error-msg">Something went wrong on the server. Please try again later or contact support.</p>
+      <div class="error-actions"><a class="btn btn-primary" href="/">Retry</a></div>
+    </div>
+  </div>
+</body>
+</html>

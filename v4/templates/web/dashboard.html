@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load presto %}
+{% block content %}
+<div class="page-head">
+  <h1 class="page-title">Dashboard</h1>
+  <span class="ed-eyebrow">Operational summary</span>
+</div>
+<div class="ed-card">
+  <div class="ed-card-head">
+    <span class="ed-cap">Welcome, {{ user.display_name|default:user.username }}</span>
+    <span class="ed-card-head-meta">{{ user.role }}</span>
+  </div>
+  <p>The new interface is being rebuilt page by page. Statistics and charts arrive with the dashboard in phase 6; until then the data is available through the REST API.</p>
+  <a class="btn btn-outline" href="/api/docs">{% icon "api" %}Open API documentation</a>
+</div>
+{% endblock %}

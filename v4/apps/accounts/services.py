@@ -56,8 +56,8 @@ def login(username: str, password: str, ip_address: str | None = None) -> tuple[
 
     Updates ``last_login`` and writes a LOGIN audit entry on success.
     """
-    user = User.objects.filter(username=username, is_active=True).first()
-    if user is None or not user.password or not user.check_password(password):
+    user = _check_local(username, password)
+    if user is None:
         return None
     user.last_login = _utcnow_naive()
     user.save(update_fields=["last_login"])
@@ -75,28 +75,37 @@ def logout(refresh_token: str) -> bool:
     return tokens.revoke_refresh_token(refresh_token)
 
 
-def authenticate(
-    username: str, password: str, auth_method: str = "auto", ip_address: str | None = None,
-) -> tuple[User, str, str]:
-    """``POST /auth/login``: local first, then LDAP (``auth_method`` auto|local|ldap).
+def _check_local(username: str, password: str) -> User | None:
+    user = User.objects.filter(username=username, is_active=True).first()
+    if user is None or not user.password or not user.check_password(password):
+        return None
+    return user
 
-    Raises :class:`AuthError` with the v3 status and message on failure:
-    502 when LDAP is unreachable, 400 when ``ldap`` is requested but not
-    configured, 401 otherwise. Every failure writes a LOGIN_FAILED entry.
+
+def verify_credentials(
+    username: str, password: str, auth_method: str = "auto", ip_address: str | None = None,
+) -> User:
+    """Check credentials: local first, then LDAP (``auth_method`` auto|local|ldap).
+
+    Shared by the API login and the web login. On success updates
+    ``last_login`` and writes a LOGIN audit entry; issues no tokens. Raises
+    :class:`AuthError` with the v3 status and message on failure: 502 when
+    LDAP is unreachable, 400 when ``ldap`` is requested but not configured,
+    401 otherwise. Every failure writes a LOGIN_FAILED entry.
     """
     method = auth_method or "auto"
-    result = None
+    user: User | None = None
 
     if method in ("auto", "local"):
-        result = login(username, password, ip_address=ip_address)
+        user = _check_local(username, password)
 
-    if result is None and method in ("auto", "ldap"):
+    if user is None and method in ("auto", "ldap"):
         from .ldap_provider import LDAPConnectionError, LDAPProvider
 
         ldap = LDAPProvider()
         if ldap.is_configured:
             try:
-                ldap_user = ldap.authenticate(username, password)
+                user = ldap.authenticate(username, password)
             except LDAPConnectionError as exc:
                 log_action(
                     None, "LOGIN_FAILED", "auth",
@@ -107,23 +116,30 @@ def authenticate(
                     ip_address=ip_address,
                 )
                 raise AuthError(502, f"LDAP server unreachable: {exc}") from exc
-            if ldap_user is not None:
-                ldap_user.last_login = _utcnow_naive()
-                ldap_user.save(update_fields=["last_login"])
-                access, refresh_token = tokens.issue_token_pair(ldap_user)
-                log_action(ldap_user, "LOGIN", ip_address=ip_address)
-                result = (ldap_user, access, refresh_token)
         elif method == "ldap":
             raise AuthError(400, "LDAP authentication is not configured")
 
-    if result is None:
+    if user is None:
         log_action(
             None, "LOGIN_FAILED", "auth",
             details={"username": username, "auth_method": method, "reason": LOGIN_FAILED_MESSAGE},
             ip_address=ip_address,
         )
         raise AuthError(401, LOGIN_FAILED_MESSAGE)
-    return result
+
+    user.last_login = _utcnow_naive()
+    user.save(update_fields=["last_login"])
+    log_action(user, "LOGIN", ip_address=ip_address)
+    return user
+
+
+def authenticate(
+    username: str, password: str, auth_method: str = "auto", ip_address: str | None = None,
+) -> tuple[User, str, str]:
+    """``POST /auth/login``: :func:`verify_credentials`, then a new token pair."""
+    user = verify_credentials(username, password, auth_method, ip_address)
+    access, refresh_token = tokens.issue_token_pair(user)
+    return user, access, refresh_token
 
 
 def get_auth_providers() -> list[str]:

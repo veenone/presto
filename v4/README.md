@@ -18,6 +18,8 @@ Work-in-progress Django port of PRESTO. See `docs/v4-migration-plan.md` for the 
 | `apps/api` | REST API (`/api/*`, django-ninja): routers, schemas, JWT role auth. Docs at `/api/docs` |
 | `apps/reports` | Excel, Word, PDF, executive summary, comparison and trend reports (generators unchanged from v3) |
 | `apps/imports` | CSV and Excel bulk import |
+| `apps/web` | Web UI shell: navigation, permissions-aware menu, theme colours, sign-in gate, error pages |
+| `templates/`, `static/` | Django templates (htmx + Alpine.js) and CSS/JS; third-party assets vendored in `static/vendor/` |
 | `engine/` | Pure estimation logic, moved unchanged from v3 |
 | `tests/` | pytest-django suite (`tests/engine` needs no database) |
 
@@ -30,7 +32,7 @@ pip install -e ".[dev]"
 export DJANGO_DEBUG=1                 # dev only; production needs DJANGO_SECRET_KEY
 python manage.py migrate
 python manage.py seed                 # catalog, default config keys, admin/admin
-python manage.py runserver            # http://127.0.0.1:8000/api/healthcheck
+python manage.py runserver            # http://127.0.0.1:8000/ (sign in as admin/admin)
 ```
 
 ## Upgrading an existing v3 database
@@ -57,6 +59,8 @@ python manage.py ensure_defaults
 | `CSRF_TRUSTED_ORIGINS` | none | Comma-separated origins behind a proxy |
 | `APP_VERSION` | `4.0.0.dev0` | Version shown by the healthcheck and sidebar |
 | `SEED_DATA_PATH` | `../data/seed_data.json` | Seed catalog file |
+| `SECURE_COOKIES` | `0` | Set to `1` behind HTTPS so session and CSRF cookies are `Secure` |
+| `SESSION_COOKIE_AGE` | `43200` | Web session lifetime in seconds (12 h) |
 
 ## Commands
 
@@ -67,6 +71,10 @@ python manage.py ensure_defaults
 | `create_admin [--username U] [--password P]` | Creates an admin or resets its password, role and active flag |
 | `check_v3_compat [--before-migrate]` | Compares database tables and columns with the models |
 | `sync_redmine --once` / `--loop` | Imports Redmine issues into the request inbox; `--loop` repeats every `poll_interval_minutes` (replaces the v3 in-process scheduler) |
+
+## Web UI
+
+Server-rendered Django templates with htmx and Alpine.js (no build step). Sign in at `/login` with a local, LDAP or single sign-on (OIDC) account. Pages keep their v3 URLs; pages not yet rebuilt show a placeholder with the same access rules. See `docs/UI_CONVENTIONS.md`.
 
 ## API
 

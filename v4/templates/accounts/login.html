@@ -1,0 +1,70 @@
+{% extends "base_bare.html" %}
+{% load presto %}
+{% block title %}Sign in · PRESTO{% endblock %}
+{% block body %}
+<div class="ed-login-bg">
+  <div class="ed-login-shell">
+    <section class="ed-login-brand">
+      <div>
+        {% if branding.logo_url %}<img class="ed-login-brand-logo" src="{{ branding.logo_url }}" alt="">{% endif %}
+        <h1 class="ed-login-brand-title">PRESTO</h1>
+        <p class="ed-login-brand-tagline">Project Request Estimation Tool. Plan test effort, track requests, and ship predictable estimations.</p>
+      </div>
+      <div class="ed-login-brand-meta">v{{ app_version }} · INTERNAL TOOL</div>
+    </section>
+
+    <section class="ed-login-form" x-data="{ method: '{{ method|escapejs }}' }">
+      <div class="ed-login-cap">Sign In</div>
+      <h2 class="ed-login-heading">Welcome back</h2>
+
+      {% if error %}
+        <div class="alert" role="alert">{% icon "error" %}<span>{{ error }}</span></div>
+      {% endif %}
+      {% for m in messages %}
+        <div class="alert" role="alert">{% icon "error" %}<span>{{ m }}</span></div>
+      {% endfor %}
+
+      {% if "ldap" in providers %}
+        <div class="ed-login-method" role="group" aria-label="Sign-in method">
+          <button type="button" class="ed-login-method-btn" :class="{ active: method !== 'ldap' }"
+                  :aria-pressed="(method !== 'ldap').toString()" @click="method = 'local'">Internal</button>
+          <button type="button" class="ed-login-method-btn" :class="{ active: method === 'ldap' }"
+                  :aria-pressed="(method === 'ldap').toString()" @click="method = 'ldap'">LDAP</button>
+        </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="auth_method" :value="method" value="{{ method }}">
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <label class="field">
+          <span class="field-label">Username</span>
+          <input class="input" type="text" name="username" value="{{ form.username.value|default:'' }}"
+                 autocomplete="username" required autofocus>
+        </label>
+        <div class="field" x-data="passwordField">
+          <label class="field-label" for="id_password">Password</label>
+          <div class="input-wrap">
+            <input class="input" id="id_password" name="password" :type="shown ? 'text' : 'password'" type="password"
+                   autocomplete="current-password" required>
+            <button type="button" class="btn-round sm" @click="shown = !shown"
+                    :aria-label="shown ? 'Hide password' : 'Show password'">
+              <span class="icon" x-text="shown ? 'visibility_off' : 'visibility'">visibility</span>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block ed-login-submit">Sign In</button>
+      </form>
+
+      {% if "oidc" in providers %}
+        <div class="ed-login-divider">or</div>
+        <a class="btn btn-outline btn-block" href="{% url 'oidc_start' %}{% if next %}?next={{ next|urlencode }}{% endif %}">
+          {% icon "badge" %}Sign in with single sign-on
+        </a>
+      {% endif %}
+
+      <div class="ed-login-foot">PRESTO · authenticated session</div>
+    </section>
+  </div>
+</div>
+{% endblock %}
