@@ -12,4 +12,6 @@ MODULES = [
     "apps.web.urls.planning",       # historical projects, team, public holidays
     "apps.web.urls.admin_people",   # users, RBAC, audit log
     "apps.web.urls.admin_system",   # settings, backup & restore
+    "apps.web.urls.estimation_pages",   # estimations list, estimation detail
+    "apps.web.urls.estimation_wizard",  # new estimation, draft resume, edit / revise
 ]
