@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% load static presto %}
-{% block head %}<link rel="stylesheet" href="{% static 'css/pages/admin_system.css' %}">{% endblock %}
 {% block content %}
 <div x-data="{ dirty: false, mark(e) { if (!('nodirty' in e.target.dataset)) this.dirty = true; } }">
   <div class="ed-toolbar">

@@ -62,3 +62,23 @@ def get_item(mapping, key):
         return mapping.get(key, "")
     except AttributeError:
         return ""
+
+
+@register.simple_tag
+def page_stylesheets() -> str:
+    """<link> tags for every static/css/pages/*.css file.
+
+    Loaded on every page from the base layout: htmx boosted navigation swaps
+    only <body>, so stylesheets added to <head> by individual pages would be
+    missing after navigating from the sidebar.
+    """
+    from pathlib import Path
+
+    from django.conf import settings
+    from django.templatetags.static import static
+
+    folder = Path(settings.BASE_DIR) / "static" / "css" / "pages"
+    names = sorted(p.name for p in folder.glob("*.css"))
+    return mark_safe("".join(
+        format_html('<link rel="stylesheet" href="{}">', static(f"css/pages/{n}")) for n in names
+    ))

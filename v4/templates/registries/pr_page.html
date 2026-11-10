@@ -2,7 +2,6 @@
 {% load presto static %}
 {% block content %}
 {% if configured %}{{ block.super }}{% else %}
-<link rel="stylesheet" href="{% static 'css/pages/registries.css' %}">
 <div class="ed-toolbar">
   <div class="ed-toolbar-grow"></div>
   <div class="ed-status-now"><span class="ed-status-dot"></span><span class="ed-mono" id="crud-total">TOTAL · 0</span></div>

@@ -53,10 +53,12 @@ class ProfilesPage(CrudPage):
 - Column kinds: `text`, `strong`, `mono`, `truncate` (60 chars + tooltip), `bool` (check/cross icon), `badge`; `fmt` formats numbers (`"{:.2f}"`).
 - Override `template_name` / `results_template` / `form_template` (extend the `web/crud/*` templates and their blocks: `toolbar_extra`, `above_results`, `filters_extra`, `row_lead`, `row_actions`, `fields`) for pages that need more (bulk selection, extra dialogs).
 - The results container uses `hx-disinherit="*"`; give every control inside it explicit `hx-target`/`hx-swap`.
-- Page-specific CSS goes in `static/css/pages/<group>.css`, loaded from the page template's `{% block head %}`; shared tokens stay in `app.css`.
+- Page-specific CSS goes in `static/css/pages/<group>.css`. Every file in that folder is linked from the base layout (`{% page_stylesheets %}`), because boosted sidebar navigation swaps only `<body>` and would drop stylesheets added to a page's `<head>`. Scope selectors to the page's own classes. Shared tokens stay in `app.css`.
 - Successful saves answer 204 with `HX-Trigger` `crud-refresh` + `close-modal` + `toast`; invalid forms answer 422 with the dialog re-rendered (htmx is configured to swap 422).
 
 ## Gotchas found in Phase 4
+
+- Page `<head>` content is not applied after boosted navigation; see the page CSS rule above.
 
 - `runserver --noreload` keeps serving cached templates: restart it after template edits when testing in a browser.
 - Elements placed inside `.app` become grid cells; overlays (modal host) live outside it.
@@ -78,3 +80,13 @@ Resolution order (decision D6): the user's saved choice (`users.theme_preference
 1. Tests for each view: access for allowed and refused roles, happy path, validation errors, htmx partial responses.
 2. Open it in both themes and at phone width (no horizontal scroll); look for console errors.
 3. Compare with the v3 screenshot in `docs/v3-baseline/screenshots/`.
+
+## Framework follow-ups (suggested while building Phase 4 pages)
+
+Pages currently work around these by overriding methods or copying template markup. Fold them into `apps/web/crud.py` and `templates/web/crud/` when a page next needs one:
+
+- Generic select filters kept in the URL state, with a filter hook in `build_results` (features pages use `FilteredCrudPage`).
+- Per-request columns, Add button and per-row action flags instead of page-wide `can_write`.
+- `CrudPage.urls()` accepting extra routes; an `empty_text` attribute; a hook for extra query parameters (holiday calendar month).
+- Template blocks: around each cell (custom cell types), above the tiles (banners), in the dialog footer (Delete button in edit dialogs).
+- Shared confirm-action dialog, dropdown menu, coloured badge per value, and a secondary text button token.

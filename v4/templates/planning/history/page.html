@@ -1,6 +1,5 @@
 {% extends "web/crud/page.html" %}
 {% load static presto %}
-{% block head %}<link rel="stylesheet" href="{% static 'css/pages/planning.css' %}">{% endblock %}
 {% block toolbar_extra %}
   <button type="button" class="btn btn-flat" hx-get="{{ list_path }}" hx-target="#crud-results" hx-swap="outerHTML"
           hx-include="#crud-state, #crud-search">

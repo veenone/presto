@@ -1,6 +1,6 @@
 # PRESTO v4 — Migration Plan: Django + HTMX + Alpine.js
 
-**Status:** In progress (rev. 5: Phases 0 to 3 complete, see §17)
+**Status:** In progress (rev. 6: Phases 0 to 4 complete, see §17)
 **Date:** 2026-11-09
 **Baseline:** v3.4.0 (FastAPI + SQLAlchemy backend, NiceGUI / Streamlit / C# WinForms frontends)
 
@@ -796,3 +796,34 @@ Changes from the plan:
 - `verify_credentials()` was split out of the API login so the web sign-in reuses the same local/LDAP flow and audit entries without issuing API tokens.
 - Material Symbols (variable font, 3.3 MB) is vendored whole so later pages can use any icon.
 - Text on primary-coloured buttons is computed from the configured colour (v3 always used white, unreadable on the default dark-mode light blue).
+
+### Phase 4 — done (2026-11-10)
+
+All 17 catalog and administration pages are real pages; only the estimation (Phase 5) and requests, dashboard and integrations (Phase 6) pages remain placeholders. Screenshots in both themes: `docs/v4-screenshots/phase4/`.
+
+| Group | Pages | Highlights |
+|-------|-------|-----------|
+| Catalog | Feature Catalog, Feature Presets, Task Templates, Test Profiles | Product type and scope filters, project-feature promotion, template links with per-feature hour overrides, category manager |
+| Registries | DUT Registry, DUT Assets, Document Types, Risk Registry, PR Registry | DUT bulk edit and delete, Snipe-IT assets with import as DUT, Jira PR list with detail dialog |
+| Planning | Historical Projects, Team Members, Public Holidays | Accuracy ratio, skills chips, teams with membership, month calendar with ICS import |
+| People admin | Users, RBAC, Audit Log | Search, bulk role, self-lockout protection, LDAP actions, 18x4 permission matrix, audit filters and JSON details |
+| System admin | Settings, Backup & Restore | Typed inputs per key, colour pickers, secrets never echoed, SMTP/LDAP tests, guarded reinit actions, two-step restore preview |
+
+Built on one shared list/edit framework (`apps/web/crud.py`) with server-side search, filters, sorting and paging, and htmx dialogs. Writes go through the domain services, so validation messages match the API, and every write action requires the same role as its API endpoint.
+
+Verification:
+
+- 1,138 tests pass (344 new for the pages); ruff is clean.
+- Browser sweep through the sidebar as admin and as viewer over all 17 pages: no script errors, page styles present, no horizontal scroll at desktop or phone width; the viewer sees only the pages its role allows.
+- Browser runs found and fixed: the modal host breaking the grid, inherited htmx attributes hijacking dialog buttons, toasts lost when a dialog closed, and page stylesheets missing after sidebar navigation.
+
+Intentional differences from v3 (all covered by tests):
+
+- Write buttons are hidden from roles the API would reject; v3 showed them and failed on save.
+- Historical projects and document types can be edited or deleted (the API always allowed it); deletes of teams and holidays ask for confirmation.
+- Users: you cannot change your own role or deactivate yourself. Audit Log gains user and date filters with real paging, and stays admin-only as in the v3 menu.
+- Settings saves all changes at once or none, and shows secrets only as set / not set.
+- Feature presets show as a table; Manage Categories is admin-only (its save API always was).
+- LDAP test, sync and reset are available on both Users and Settings.
+
+Follow-ups: shared-framework improvements listed in `v4/docs/UI_CONVENTIONS.md`; per-process cache for DUT assets (move to a shared cache in Phase 7); Snipe-IT adapter hides most HTTP errors (inherited from v3).

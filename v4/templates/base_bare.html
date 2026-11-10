@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static presto %}<!doctype html>
 <html lang="en" data-theme-server="{{ user_theme }}">
 <head>
   <meta charset="utf-8">
@@ -16,6 +16,7 @@
     })();
   </script>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% page_stylesheets %}
   <style>
     :root[data-theme="light"] { {% for name, value in theme_vars.light.items %}{{ name }}: {{ value }}; {% endfor %} }
     :root[data-theme="dark"] { {% for name, value in theme_vars.dark.items %}{{ name }}: {{ value }}; {% endfor %} }
