@@ -236,7 +236,8 @@ class TestSave:
         assert json.loads(value("product_types")) == ["Payment", "Telco", "Transit"]
 
     def test_formatting_only_change_is_no_change(self, admin_client):
-        resp = save(admin_client, {"product_types": "Payment,Telco", "dut_categories": "SIM, eSIM, UICC, IoT Device, Mobile Device, Other"})
+        resp = save(admin_client, {"product_types": "Payment,Telco",
+                                   "dut_categories": "SIM, eSIM, UICC, IoT Device, Mobile Device, Other"})
         assert resp.status_code == 204 and "HX-Redirect" not in resp
         assert json.loads(resp["HX-Trigger"])["toast"]["message"] == "No changes detected."
         assert value("product_types") == '["Payment", "Telco"]'
@@ -288,8 +289,8 @@ class TestLogo:
     def test_upload_valid(self, admin_client, uploads):
         from django.core.files.uploadedfile import SimpleUploadedFile
 
-        resp = admin_client.post("/settings/logo", {"file": SimpleUploadedFile("brand.PNG", b"\x89PNGdata", "image/png")},
-                                 headers=HX)
+        logo = SimpleUploadedFile("brand.PNG", b"\x89PNGdata", "image/png")
+        resp = admin_client.post("/settings/logo", {"file": logo}, headers=HX)
         assert resp.status_code == 200
         assert (uploads / "logo.png").read_bytes() == b"\x89PNGdata"
         assert value("logo_url").startswith("/api/static/uploads/logo.png?v=")

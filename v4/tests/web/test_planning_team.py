@@ -189,6 +189,7 @@ class TestTeams:
         body = resp.content.decode()
         assert resp.status_code == 200 and 'id="teams-section"' in body
         assert "1 member<" in body and "cards" in body and "1 team<" in body
+        assert f'hx-get="/team/teams/{team.pk}/members"' in body and 'hx-get="/team/teams"' in body
         assert approver.post("/team/teams").status_code == 405
 
     def test_manage_members(self, approver, members):

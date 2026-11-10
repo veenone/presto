@@ -14,6 +14,7 @@ from django.db import transaction
 from django.http import Http404
 from django.shortcuts import render
 from django.urls import path as url_path
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.accounts import services as account_services
@@ -251,7 +252,8 @@ class TeamPage(CrudPage):
 
     def teams_view(self, request):
         self.check_view(request)
-        return render(request, "planning/team/_teams.html", self.context(request, teams=services.list_teams()))
+        return render(request, "planning/team/_teams.html",
+                      self.context(request, teams=services.list_teams(), list_path=reverse(self.url_name)))
 
     def team_new_view(self, request):
         self.check_team_write(request)

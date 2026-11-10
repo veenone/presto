@@ -92,3 +92,4 @@ button.cal-badge:hover { filter: brightness(1.12); }
   .cal-title { min-width: 0; flex: 1; font-size: 17px; }
   .cal-weekdays > div { font-size: 11px; }
 }
+.holiday-list td.kind-mono, .data-table td.kind-age { white-space: nowrap; }

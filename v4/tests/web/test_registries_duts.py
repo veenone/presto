@@ -99,10 +99,12 @@ class TestCrud:
         client = web_login(make_user(role))
         d = DutType.objects.first()
         assert client.get("/duts").status_code == 200
-        assert client.post("/duts/new", {"name": "x", "category": "SIM", "complexity_multiplier": "1"}).status_code == 403
+        new = {"name": "x", "category": "SIM", "complexity_multiplier": "1"}
+        assert client.post("/duts/new", new).status_code == 403
         assert client.post(f"/duts/{d.pk}/edit", {"name": "x"}).status_code == 403
         assert client.post(f"/duts/{d.pk}/delete").status_code == 403
-        assert client.post("/duts/bulk-edit", {"ids": [d.pk], "set_category": "on", "category": "SIM"}).status_code == 403
+        bulk = {"ids": [d.pk], "set_category": "on", "category": "SIM"}
+        assert client.post("/duts/bulk-edit", bulk).status_code == 403
         assert client.post("/duts/bulk-delete", {"ids": [d.pk]}).status_code == 403
         assert DutType.objects.filter(pk=d.pk, name=d.name).exists()
 
