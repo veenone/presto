@@ -1,6 +1,6 @@
 # PRESTO v4 — Migration Plan: Django + HTMX + Alpine.js
 
-**Status:** In progress (rev. 6: Phases 0 to 4 complete, see §17)
+**Status:** In progress (rev. 7: Phases 0 to 5 complete, see §17)
 **Date:** 2026-11-09
 **Baseline:** v3.4.0 (FastAPI + SQLAlchemy backend, NiceGUI / Streamlit / C# WinForms frontends)
 
@@ -827,3 +827,30 @@ Intentional differences from v3 (all covered by tests):
 - LDAP test, sync and reset are available on both Users and Settings.
 
 Follow-ups: shared-framework improvements listed in `v4/docs/UI_CONVENTIONS.md`; per-process cache for DUT assets (move to a shared cache in Phase 7); Snipe-IT adapter hides most HTTP errors (inherited from v3).
+
+### Phase 5 — done (2026-11-10)
+
+Estimations are fully usable in the web UI. Screenshots: `docs/v4-screenshots/phase5/`.
+
+| Page | Delivered |
+|------|-----------|
+| Estimations list | v3 columns, status and feasibility badges, status tiles and filters, search, sort, paging |
+| Wizard (`/estimation/new`, `/estimation/<id>/edit`) | All 7 v3 steps with presets, custom project features, DUT x Profile matrix, PR details with Jira import, documents, team allocation, risks, live preview; autosave for new estimations and drafts; revision flow for REVISED estimations |
+| Estimation detail | Header card, tabs (Overview, Tasks, Documents, PR Fixes, Team, Risks, Versions, Workflow), status workflow, Excel/Word/PDF/executive summary downloads, export to external system, export tasks, assign, send by email, compare, calibrate, archive, version diff |
+
+Design as planned: the wizard state is one API-shaped payload in the session; autosave creates exactly one DRAFT and then edits it in place; a revision stays in the session until "Save Revision", which snapshots the previous version.
+
+Verification:
+
+- 1,247 tests pass (109 new); ruff is clean.
+- A saved estimation reopened in the wizard and saved unchanged gives identical totals, tasks and child rows; the wizard preview equals `POST /api/estimations/calculate`.
+- End-to-end browser run: wizard to detail, DRAFT to FINAL to REVISED, revision back through the wizard (version 2, one snapshot), version list and Excel download; no console errors.
+
+Intentional differences from v3:
+
+- Moving forward in the wizard (including via step headers) validates the current step; Save re-checks all steps.
+- Drafts autosave when resumed (v3 only autosaved new estimations).
+- The detail page adds Risks and Versions tabs, calibration, send by email, compare and the executive summary (all existed in the API).
+- PR fix hours on the detail page come from Settings instead of fixed 2/4/8; approving records the approver's name; the assign list works for approvers.
+
+Known limitation kept from v3: the wizard preview leaves out PR test-creation hours, which are added when saving (the preview labels that task "added on save").

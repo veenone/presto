@@ -38,8 +38,8 @@ NAVIGATION: tuple[NavSection, ...] = (
                 ("view_requests", "manage_requests"), phase=6),
     )),
     NavSection("estimation", "Estimation", (
-        NavItem("Estimations", "list_alt", "estimations", "/estimations", phase=5),
-        NavItem("New Estimation", "add_circle", "estimation_new", "/estimation/new", phase=5),
+        NavItem("Estimations", "list_alt", "estimations", "/estimations"),
+        NavItem("New Estimation", "add_circle", "estimation_new", "/estimation/new"),
     )),
     NavSection("data_management", "Data Management", (
         NavItem("Feature Catalog", "category", "features", "/features"),

@@ -36,9 +36,13 @@ class TestNavigation:
         assert 'href="/duts"\n               aria-current="page"' in body or 'aria-current="page"' in body
 
     def test_every_v3_page_url_exists(self, admin_client):
-        details = ["/requests/1", "/estimation/1", "/estimation/1/edit"]
+        from apps.estimations.models import Estimation
+
+        est = Estimation.objects.create(project_name="P", project_type="NEW")  # DRAFT: editable
+        details = ["/requests/1", f"/estimation/{est.pk}", f"/estimation/{est.pk}/edit"]
         for path in [i.path for i in ITEMS_BY_NAME.values()] + details:
             assert admin_client.get(path).status_code == 200, path
+        assert admin_client.get("/estimation/999999").status_code == 404
 
     def test_admin_pages_forbidden_for_others(self, web_login, make_user, seeded):
         client = web_login(make_user("APPROVER"))
