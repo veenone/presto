@@ -1,0 +1,14 @@
+{% extends "web/crud/page.html" %}
+{% load static presto %}
+{% block head %}<link rel="stylesheet" href="{% static 'css/pages/planning.css' %}">{% endblock %}
+{% block toolbar_extra %}
+  {% if can_manage_teams %}
+    <button type="button" class="btn btn-flat btn-secondary-text" hx-get="{{ list_path }}/teams/new" hx-target="#modal">
+      {% icon "group_add" %}Create Team
+    </button>
+  {% endif %}
+{% endblock %}
+{% block content %}
+  {{ block.super }}
+  {% include "planning/team/_teams.html" %}
+{% endblock %}

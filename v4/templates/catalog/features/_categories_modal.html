@@ -1,0 +1,37 @@
+{% load presto %}
+<div class="modal-backdrop" data-modal>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="modal-title">Manage Feature Categories</h2>
+      <button type="button" class="btn-round sm" data-close-modal aria-label="Close">{% icon "close" %}</button>
+    </div>
+    <div class="modal-body">
+      {% if error %}<div class="alert" role="alert">{% icon "error" %}<span>{{ error }}</span></div>{% endif %}
+      <ul class="cat-list">
+        {% for cat in categories %}
+          <li class="cat-row">
+            <span>{{ cat }}</span>
+            <form hx-post="{{ action }}" hx-target="#modal">
+              {% csrf_token %}
+              <input type="hidden" name="op" value="remove"><input type="hidden" name="name" value="{{ cat }}">
+              <button type="submit" class="btn-round sm tone-negative" title="Remove category" aria-label="Remove category {{ cat }}">{% icon "delete" %}</button>
+            </form>
+          </li>
+        {% empty %}
+          <li class="cat-row muted">No categories defined.</li>
+        {% endfor %}
+      </ul>
+      <form class="cat-add" hx-post="{{ action }}" hx-target="#modal">
+        {% csrf_token %}
+        <input type="hidden" name="op" value="add">
+        <label class="sr-only" for="cat-new">New category</label>
+        <input id="cat-new" class="input" name="name" value="{{ value }}" placeholder="New category" autocomplete="off"
+               {% if error %}aria-invalid="true"{% endif %}>
+        <button type="submit" class="btn btn-primary">{% icon "add" %}Add</button>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-flat" data-close-modal>Close</button>
+    </div>
+  </div>
+</div>

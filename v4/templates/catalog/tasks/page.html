@@ -1,0 +1,4 @@
+{% extends "web/crud/page.html" %}
+{% load static %}
+{% block head %}<link rel="stylesheet" href="{% static 'css/pages/features.css' %}">{% endblock %}
+{% block filters_extra %}{% include "catalog/_select_filters.html" %}{% endblock %}

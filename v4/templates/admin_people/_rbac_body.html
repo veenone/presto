@@ -1,0 +1,61 @@
+{% load presto %}
+<div id="rbac-body" hx-get="{% url 'rbac' %}" hx-trigger="rbac-refresh from:body" hx-target="this" hx-swap="outerHTML"
+     hx-disinherit="*">
+  <div class="ed-strip">
+    {% for c in counts %}
+      <div class="ed-strip-cell">
+        <div class="ed-eyebrow">{{ c.role }}</div>
+        <div class="ed-strip-num">{{ c.count }}</div>
+        <div class="ed-stat-tile-sub">of {{ total }} permissions</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="ap-legend">
+    <span class="ed-eyebrow">Roles:</span>
+    {% for r in roles %}<span class="badge ap-role-{{ r }}">{{ r }}</span>{% endfor %}
+  </div>
+
+  <form id="rbac-form" hx-post="{% url 'rbac' %}" hx-target="#rbac-body" hx-swap="outerHTML"
+        x-data="{ dirty: false }" @change="dirty = true">
+    {% csrf_token %}
+    <div class="ed-card ed-card-table">
+      <div class="table-scroll">
+        <table class="data-table ap-matrix">
+          <caption class="sr-only">Permission matrix: permissions by role</caption>
+          <thead>
+            <tr>
+              <th scope="col">Permission</th>
+              {% for r in roles %}<th scope="col" class="align-center"><span class="badge ap-role-{{ r }}">{{ r }}</span></th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <th scope="row" class="ap-perm" title="{{ row.description }}">
+                  <span class="ap-perm-label">{{ row.label }}</span>
+                  <span class="ap-perm-desc">{{ row.description }}</span>
+                </th>
+                {% for cell in row.cells %}
+                  <td class="align-center">
+                    {% if cell.locked %}
+                      <input type="checkbox" class="ap-check" checked disabled
+                             aria-label="{{ row.label }} for {{ cell.role }} (always granted)" title="ADMIN always has every permission">
+                    {% else %}
+                      <input type="checkbox" class="ap-check" name="perm_{{ cell.role }}" value="{{ row.key }}"
+                             {% if cell.checked %}checked{% endif %} aria-label="{{ row.label }} for {{ cell.role }}">
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="ap-form-foot">
+      <span class="ap-dirty" x-show="dirty" x-cloak>{% icon "edit_note" %}Unsaved changes</span>
+      <button type="submit" class="btn btn-primary">{% icon "save" %}Save Changes</button>
+    </div>
+  </form>
+</div>

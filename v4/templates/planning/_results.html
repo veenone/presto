@@ -1,0 +1,48 @@
+{% load presto %}
+{# Same structure as web/crud/_results.html, plus page-specific cell kinds (planning/_cell.html). #}
+<div id="crud-results" hx-get="{{ links.self }}" hx-trigger="crud-refresh from:body" hx-swap="outerHTML"
+     hx-target="this" hx-disinherit="*">
+  <form id="crud-state" hidden>
+    <input type="hidden" name="seg" value="{{ state.seg }}">
+    <input type="hidden" name="sort" value="{{ state.sort }}">
+    <input type="hidden" name="dir" value="{{ state.dir }}">
+  </form>
+
+  {% if results.tiles %}
+  <div class="ed-strip">
+    {% for tile in results.tiles %}
+      {% if tile.segment %}
+        <a class="ed-strip-cell ed-stat-tile{% if tile.segment == state.seg %} active{% endif %}"
+           href="{{ links.segments|get:tile.segment }}" hx-get="{{ links.segments|get:tile.segment }}"
+           hx-target="#crud-results" hx-swap="outerHTML" hx-push-url="true">
+      {% else %}
+        <div class="ed-strip-cell">
+      {% endif %}
+          <div class="ed-eyebrow">{{ tile.label }}</div>
+          <div class="ed-strip-num">{{ tile.value }}</div>
+          {% if tile.sub %}<div class="ed-stat-tile-sub">{{ tile.sub }}</div>{% endif %}
+      {% if tile.segment %}</a>{% else %}</div>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if results.segments|length > 1 %}
+  <div class="ed-segmented" role="group" aria-label="Filter">
+    {% for seg in results.segments %}
+      {% if seg.count or seg.key == state.seg or seg.key == "all" %}
+      <a class="ed-segmented-item{% if seg.key == state.seg %} active{% endif %}"
+         {% if seg.key == state.seg %}aria-current="true"{% endif %}
+         href="{{ links.segments|get:seg.key }}" hx-get="{{ links.segments|get:seg.key }}"
+         hx-target="#crud-results" hx-swap="outerHTML" hx-push-url="true">
+        {{ seg.label }}<span class="seg-count">· {{ seg.count }}</span>
+      </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="ed-card ed-card-table">
+    {% include "planning/_table.html" %}
+  </div>
+  <span hidden hx-swap-oob="innerHTML:#crud-total">TOTAL · {{ results.total }}</span>
+</div>

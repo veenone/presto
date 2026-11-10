@@ -302,3 +302,94 @@ def get_integration_status() -> list[dict]:
         }
         for cfg in IntegrationConfig.objects.all()
     ]
+
+
+# ── Read helpers for the web pages (same rules and messages as the API routes) ──
+
+def snipeit_saved_categories() -> list[str]:
+    """Category names saved on the Snipe-IT integration (``categories``, comma separated)."""
+    cfg = IntegrationConfig.objects.filter(system_name="SNIPE_IT").first()
+    extra = cfg.additional_config if cfg and isinstance(cfg.additional_config, dict) else {}
+    return [c.strip() for c in str(extra.get("categories") or "").split(",") if c.strip()]
+
+
+def snipeit_assets(categories: list[str] | None = None) -> list[dict]:
+    """Hardware assets from Snipe-IT (``GET /integrations/SNIPE_IT/assets``)."""
+    from apps.core.errors import ServiceError
+
+    adapter = get_adapter("SNIPE_IT")
+    if not adapter:
+        raise ServiceError(400, "Snipe-IT integration is not configured or not enabled.")
+    if not isinstance(adapter, SnipeItAdapter):
+        raise ServiceError(500, "Invalid Snipe-IT adapter")
+    try:
+        return adapter.get_hardware_by_category(list(categories or []))
+    except Exception as exc:
+        raise ServiceError(502, f"Failed to load assets: {exc}") from exc
+
+
+def jira_pr_configured() -> bool:
+    cfg = IntegrationConfig.objects.filter(system_name="JIRA").first()
+    return bool(cfg and cfg.enabled)
+
+
+def _jira_error_detail(resp) -> str:
+    detail = (resp.text or "").strip()[:500]
+    try:
+        payload = resp.json()
+        msgs = payload.get("errorMessages") or []
+        field_errs = [f"{k}: {v}" for k, v in (payload.get("errors") or {}).items()]
+        combined = "; ".join(msgs + field_errs)
+        if combined:
+            detail = combined
+    except Exception:
+        pass
+    return detail
+
+
+def jira_pr_items(jql: str = "") -> list[dict]:
+    """Problem reports from Jira via the PR JQL filter (``GET /integrations/JIRA/pr-items``)."""
+    from apps.core.errors import ServiceError
+
+    cfg = IntegrationConfig.objects.filter(system_name="JIRA").first()
+    if not cfg or not cfg.enabled:
+        raise ServiceError(400, "JIRA integration not configured or not enabled.")
+    adapter = get_adapter("JIRA")
+    if not isinstance(adapter, JiraAdapter):
+        raise ServiceError(400, "JIRA integration not available.")
+    extra = cfg.additional_config if isinstance(cfg.additional_config, dict) else {}
+    jql = jql or extra.get("pr_jql_filter", "")
+    if not jql:
+        raise ServiceError(400, "No PR JQL filter provided.")
+    try:
+        resp = adapter._pr_request(
+            "GET", adapter._url("search"),
+            params={"jql": jql, "maxResults": 200,
+                    "fields": "summary,priority,status,issuetype,created,description"},
+        )
+    except Exception as exc:
+        raise ServiceError(500, f"Failed to fetch PR items: {exc}") from exc
+    if resp.status_code >= 400:
+        detail = _jira_error_detail(resp)
+        raise ServiceError(400, f"Jira returned HTTP {resp.status_code}: {detail or 'no error body'}")
+    try:
+        issues = resp.json().get("issues", [])
+    except Exception as exc:
+        raise ServiceError(500, f"Failed to fetch PR items: {exc}") from exc
+    base = (adapter.base_url or "").rstrip("/")
+    result = []
+    for issue in issues:
+        fields = issue.get("fields", {})
+        key = issue.get("key", "")
+        raw_desc = fields.get("description")
+        result.append({
+            "key": key,
+            "summary": fields.get("summary", ""),
+            "priority": (fields.get("priority") or {}).get("name", "Medium"),
+            "status": (fields.get("status") or {}).get("name", ""),
+            "issue_type": (fields.get("issuetype") or {}).get("name", ""),
+            "created": fields.get("created", ""),
+            "description": "" if isinstance(raw_desc, dict) else (raw_desc or ""),
+            "link": f"{base}/browse/{key}" if base and key else "",
+        })
+    return result

@@ -1,0 +1,16 @@
+{% load presto %}
+<div class="modal-backdrop" data-modal>
+  <div class="modal modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+    <form hx-post="{{ action }}" hx-target="#modal">
+      {% csrf_token %}
+      <div class="modal-head"><h2 class="modal-title" id="modal-title">Reinitialize DUT Registry</h2></div>
+      <div class="modal-body">
+        <p id="modal-desc">This will delete ALL DUT types and reset IDs to start from 1. This cannot be undone.</p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-flat" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-danger">Delete All</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static presto %}
+{% block head %}<link rel="stylesheet" href="{% static 'css/pages/admin_system.css' %}">{% endblock %}
+{% block content %}
+<div class="ed-toolbar">
+  <div class="ed-toolbar-grow"></div>
+  <div class="ed-status-now"><span class="ed-status-dot"></span><span class="ed-mono">ADMIN ONLY</span></div>
+</div>
+
+<h1 class="page-title page-title-list">Backup &amp; Restore</h1>
+<p class="ed-eyebrow st-lead">Export all configuration data as a JSON file, or restore from a previous backup. Affects features, task templates, DUTs, profiles, team members, risks, document types, and public holidays.</p>
+
+<section class="ed-card" aria-labelledby="bk-download">
+  <div class="ed-card-head">
+    <span class="ed-cap" id="bk-download">Download Backup</span>
+    <span class="ed-card-head-meta">read-only operation</span>
+  </div>
+  <p class="st-card-text">Export all configuration data (features, task templates, DUT types, test profiles, team members, risk items, document types, public holidays) as a JSON file you can store off-platform or hand to another instance.</p>
+  <a class="btn btn-primary" href="{% url 'backup_download' %}" download>{% icon "download" %}Download Backup</a>
+</section>
+
+<section class="ed-card st-warn-card" aria-labelledby="bk-restore">
+  <div class="ed-card-head">
+    <span class="ed-cap st-warn" id="bk-restore">Restore from Backup</span>
+    <span class="ed-card-head-meta st-warn">destructive · cannot be undone</span>
+  </div>
+  <p class="st-card-text">Upload a previously downloaded backup JSON file (from this or a v3 instance). This will replace all current configuration data with the backup contents.</p>
+  <p class="st-warn st-strong">Consider downloading a backup first as a safety net.</p>
+  <form id="restore-form" class="st-restore-form" method="post" action="{% url 'backup_restore' %}" enctype="multipart/form-data"
+        hx-post="{% url 'backup_restore' %}" hx-encoding="multipart/form-data" hx-target="#modal">
+    {% csrf_token %}
+    <div class="field">
+      <label class="field-label" for="restore-file">Backup file (.json)</label>
+      <input type="file" class="input" id="restore-file" name="file" accept=".json,application/json" required>
+      <span class="field-help">Select a file, then confirm the restore in the dialog that appears. Nothing changes until you confirm.</span>
+    </div>
+    <button type="submit" class="btn btn-outline st-warn" hx-disabled-elt="this">{% icon "settings_backup_restore" %}Review &amp; restore…</button>
+  </form>
+  <div id="restore-result" class="st-restore-result" aria-live="polite"></div>
+</section>
+{% endblock %}

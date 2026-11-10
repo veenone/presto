@@ -1,0 +1,30 @@
+{% load presto %}
+<section id="teams-section" class="ed-card" aria-labelledby="teams-head"
+         hx-get="{{ list_path }}/teams" hx-trigger="crud-refresh from:body" hx-swap="outerHTML" hx-target="this"
+         hx-disinherit="*">
+  <div class="ed-card-head">
+    <h2 class="ed-cap" id="teams-head">Teams</h2>
+    <span class="ed-card-head-meta">{{ teams|length }} team{{ teams|length|pluralize }}</span>
+  </div>
+  {% if teams %}
+    <div class="team-cards">
+      {% for team in teams %}
+        <article class="team-card">
+          <h3 class="team-card-name">{{ team.name }}</h3>
+          {% if team.description %}<p class="team-card-desc">{{ team.description }}</p>{% endif %}
+          <div class="ed-mono team-card-count">{{ team.member_count }} member{{ team.member_count|pluralize }}</div>
+          {% if can_manage_teams %}
+            <div class="team-card-actions">
+              <button type="button" class="btn btn-flat btn-dense btn-primary-text"
+                      hx-get="{{ list_path }}/teams/{{ team.id }}/members" hx-target="#modal">{% icon "settings" %}Manage</button>
+              <button type="button" class="btn btn-flat btn-dense tone-negative"
+                      hx-get="{{ list_path }}/teams/{{ team.id }}/delete" hx-target="#modal">{% icon "delete" %}Delete</button>
+            </div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="ed-empty">No teams created yet</div>
+  {% endif %}
+</section>

@@ -1,3 +1,5 @@
-"""Web URLs for this page group (see apps/web/urls/__init__.py)."""
+"""Web URLs for this page group (see apps/web/urls/__init__.py): settings, backup & restore."""
 
-urlpatterns: list = []
+from apps.core.pages import urlpatterns as _pages
+
+urlpatterns: list = [*_pages]

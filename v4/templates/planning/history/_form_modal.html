@@ -1,0 +1,17 @@
+{% extends "web/crud/_form_modal.html" %}
+{% block fields %}
+  {% include "web/crud/_field.html" with field=form.project_name %}
+  {% include "web/crud/_field.html" with field=form.project_type %}
+  <div class="form-grid cols-2">
+    {% include "web/crud/_field.html" with field=form.estimated_hours %}
+    {% include "web/crud/_field.html" with field=form.actual_hours %}
+  </div>
+  <div class="form-grid cols-3">
+    {% include "web/crud/_field.html" with field=form.dut_count %}
+    {% include "web/crud/_field.html" with field=form.profile_count %}
+    {% include "web/crud/_field.html" with field=form.pr_count %}
+  </div>
+  {% include "web/crud/_field.html" with field=form.completion_date %}
+  {% include "web/crud/_field.html" with field=form.features_json %}
+  {% include "web/crud/_field.html" with field=form.notes %}
+{% endblock %}

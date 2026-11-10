@@ -1,0 +1,94 @@
+/* Planning pages: Historical Projects, Team Management, Public Holidays. */
+
+/* ── Forms ──────────────────────────────────────────────────────────── */
+.form-grid { display: grid; gap: 0 12px; }
+.form-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.form-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 479px) { .form-grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.modal-inline-actions { display: flex; justify-content: flex-start; margin: 4px 0 0; }
+.btn-secondary-text { color: #26A69A; }
+:root[data-theme="dark"] .btn-secondary-text { color: #4DB6AC; }
+
+/* Multiple choice as toggle chips */
+.chip-field { border: none; padding: 0; margin: 0 0 14px; min-width: 0; }
+.chip-field legend { padding: 0; margin-bottom: 6px; }
+.chip-toggles { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+.chip-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chip-toggle span { padding: 4px 12px; border-radius: 99px; border: 1px solid var(--ed-line); font-size: 12px;
+                    transition: background 120ms ease, color 120ms ease; user-select: none; }
+.chip-toggle:hover span { background: var(--ed-bg-soft); }
+.chip-toggle input:checked + span { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.chip-toggle input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ── Table cells ────────────────────────────────────────────────────── */
+.chip-list { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 99px; font: 500 11px/1.6 var(--font);
+        background: color-mix(in srgb, #26A69A 22%, transparent); color: inherit; white-space: nowrap; }
+.data-table td.kind-chips { font-family: var(--font); min-width: 160px; }
+.role-badge { --tone: #26A69A; }
+.role-leader, .role-test_leader { --tone: #AB47BC; }
+.role-manager { --tone: #42A5F5; }
+.badge.tone-yes { --tone: var(--positive); }
+.badge.tone-no { --tone: var(--fg-muted); }
+
+/* ── Teams section ──────────────────────────────────────────────────── */
+#teams-section { margin-top: 24px; }
+#teams-section .ed-card-head h2 { margin: 0; }
+.team-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.team-card { border: 1px solid var(--ed-line); border-radius: var(--radius); padding: 16px 18px; min-width: 0; }
+.team-card-name { font-size: 16px; font-weight: 600; margin: 0 0 4px; overflow-wrap: anywhere; }
+.team-card-desc { margin: 0 0 6px; font-size: 12px; color: var(--fg-muted); overflow-wrap: anywhere; }
+.team-card-count { font-size: 12px; opacity: 0.75; }
+.team-card-actions { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
+
+/* ── Public holidays ────────────────────────────────────────────────── */
+:root[data-theme="light"] { --holiday-cell-bg: #fff3e0; --holiday-badge-bg: #ff9800; --holiday-badge-fg: #212121; }
+:root[data-theme="dark"]  { --holiday-cell-bg: #3e2723; --holiday-badge-bg: #e65100; --holiday-badge-fg: #ffffff; }
+
+.holiday-kpis { margin-bottom: 18px; }
+.holiday-layout { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.holiday-calendar { flex: 1 1 480px; min-width: 0; margin-bottom: 0; }
+.holiday-list { flex: 1 1 360px; min-width: 0; margin-bottom: 0; }
+.holiday-list-head { padding: 20px 22px 0; margin-bottom: 14px; }
+.holiday-list-head h2 { margin: 0; }
+
+.cal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.cal-title { font-size: 20px; font-weight: 500; margin: 0; min-width: 180px; text-align: center; }
+.cal-grid { width: 100%; }
+.cal-row { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.cal-weekdays > div { text-align: center; font-size: 12px; font-weight: 700; padding: 4px 0; }
+.cal-weekdays abbr { text-decoration: none; }
+.cal-row:not(.cal-weekdays) > .cal-wk { display: flex; justify-content: center; align-items: flex-start; padding: 6px 2px;
+                                        font: 600 12px/1.2 var(--ed-mono); color: var(--fg-muted);
+                                        border: 1px solid var(--ed-line-soft); }
+.cal-day { position: relative; min-height: 80px; padding: 4px 5px; border: 1px solid var(--ed-line-soft); min-width: 0;
+           display: flex; flex-direction: column; gap: 3px; }
+.cal-day.is-outside { border-color: transparent; }
+.cal-day.is-weekend { background: var(--calendar-weekend-bg); }
+.cal-day.is-today { background: var(--calendar-today-bg); }
+.cal-day.is-holiday { background: var(--holiday-cell-bg); }
+.cal-num { font-size: 13px; font-weight: 700; line-height: 1.3; pointer-events: none; position: relative; }
+.cal-day.is-today .cal-num { color: var(--primary); }
+.cal-add { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; margin: 0; border: none;
+           background: transparent; cursor: pointer; }
+.cal-add:hover { background: var(--ed-bg-soft); }
+.cal-add:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.cal-badge { position: relative; z-index: 1; display: block; width: 100%; text-align: left; border: none;
+             background: var(--holiday-badge-bg); color: var(--holiday-badge-fg); border-radius: 4px;
+             padding: 1px 4px; font: 500 11px/1.4 var(--font); white-space: nowrap; overflow: hidden;
+             text-overflow: ellipsis; }
+button.cal-badge { cursor: pointer; }
+button.cal-badge:hover { filter: brightness(1.12); }
+
+.ics-import { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.ics-pick { cursor: pointer; }
+.ics-pick:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+@media (max-width: 599px) {
+  .holiday-calendar { padding: 16px 10px; }
+  .cal-day { min-height: 56px; padding: 2px 3px; }
+  .cal-badge { font-size: 9.5px; padding: 0 2px; }
+  .cal-title { min-width: 0; flex: 1; font-size: 17px; }
+  .cal-weekdays > div { font-size: 11px; }
+}

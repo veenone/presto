@@ -1,0 +1,21 @@
+{% load presto %}
+<div class="modal-backdrop" data-modal>
+  <div class="modal modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+    <form hx-post="{{ action }}" hx-target="#modal" x-data="{ ack: false }">
+      {% csrf_token %}
+      <div class="modal-head"><h2 class="modal-title" id="modal-title">Reset to Defaults?</h2></div>
+      <div class="modal-body">
+        {% if error %}<div class="alert" role="alert">{% icon "error" %}<span>{{ error }}</span></div>{% endif %}
+        <p id="modal-desc">This will overwrite ALL custom permissions for every role with the built-in defaults and save them to the server. ADMIN always retains all permissions. This cannot be undone.</p>
+        <div class="field field-switch">
+          <label class="switch"><input type="checkbox" class="switch-input" name="confirm" value="1" x-model="ack">
+            <span class="switch-track" aria-hidden="true"></span><span>I understand this overwrites all custom permissions</span></label>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-flat" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-danger" :disabled="!ack">{% icon "restart_alt" %}Reset to Defaults</button>
+      </div>
+    </form>
+  </div>
+</div>

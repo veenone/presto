@@ -1,0 +1,23 @@
+{% load presto %}
+<div class="field st-field st-logo{% if f.error %} has-error{% endif %}" id="logo-field">
+  <label class="field-label ed-mono st-key" for="cfg-logo_url">logo_url</label>
+  <input type="text" class="input" id="cfg-logo_url" name="logo_url" value="{{ f.value }}">
+  <div class="st-logo-row">
+    {% if f.value %}
+      <img class="st-logo-preview" src="{{ f.value }}" alt="Current logo">
+    {% else %}
+      <span class="st-logo-empty ed-mono">NO LOGO</span>
+    {% endif %}
+    {% if can_edit %}
+      <label class="btn btn-outline btn-dense st-upload">
+        {% icon "upload" %}Upload logo
+        <input type="file" name="file" class="sr-only" data-nodirty accept=".png,.jpg,.jpeg,.gif,.svg,.webp"
+               hx-post="{% url 'settings_logo' %}" hx-trigger="change" hx-encoding="multipart/form-data"
+               hx-target="#logo-field" hx-swap="outerHTML" hx-include="this">
+      </label>
+      <span class="field-help">PNG, JPG, GIF, SVG or WebP; saved immediately.</span>
+    {% endif %}
+  </div>
+  {% if f.description %}<span class="field-help">{{ f.description }}</span>{% endif %}
+  {% if f.error %}<span class="field-error" role="alert">{{ f.error }}</span>{% endif %}
+</div>

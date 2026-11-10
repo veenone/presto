@@ -1,0 +1,27 @@
+{% extends "web/crud/page.html" %}
+{% load static presto %}
+{% block head %}<link rel="stylesheet" href="{% static 'css/pages/admin_people.css' %}">{% endblock %}
+{% block toolbar_extra %}
+  {# Shown while rows are ticked (v3 shows Bulk Set Role only with a selection). #}
+  <span x-data="{ n: 0, count() { this.n = document.querySelectorAll('#crud-results input[name=ids]:checked').length } }"
+        @change.window="count()" @htmx:after-settle.window="count()" class="ap-bulk">
+    <button type="button" class="btn btn-flat btn-primary-text" x-show="n > 0" x-cloak
+            hx-get="{% url 'users_bulk_role' %}" hx-include="#crud-results input[name=ids]:checked" hx-target="#modal">
+      {% icon "group" %}Bulk Set Role<span class="ed-mono ap-count" x-text="'· ' + n"></span>
+    </button>
+  </span>
+  <button type="button" class="btn btn-flat" hx-get="{{ list_path }}" hx-target="#crud-results" hx-swap="outerHTML"
+          hx-include="#crud-state, #crud-search">{% icon "refresh" %}Refresh</button>
+  <details class="ap-menu">
+    <summary class="btn btn-flat">{% icon "domain" %}LDAP{% icon "expand_more" %}</summary>
+    <div class="ap-menu-list" role="menu">
+      {% if not ldap_configured %}<div class="ap-menu-note">LDAP is not configured (Settings → LDAP).</div>{% endif %}
+      <button type="button" class="ap-menu-item" role="menuitem" hx-post="{% url 'users_ldap_test' %}" hx-swap="none">
+        {% icon "network_check" %}Test LDAP</button>
+      <button type="button" class="ap-menu-item" role="menuitem" hx-post="{% url 'users_ldap_sync' %}" hx-swap="none">
+        {% icon "sync" %}Sync LDAP Users</button>
+      <button type="button" class="ap-menu-item tone-negative" role="menuitem" hx-get="{% url 'users_ldap_reset' %}"
+              hx-target="#modal">{% icon "restart_alt" %}Reinitialize LDAP Users</button>
+    </div>
+  </details>
+{% endblock %}

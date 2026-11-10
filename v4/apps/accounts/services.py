@@ -281,3 +281,41 @@ def get_audit_log(
     offset = max(offset, 0)
     # SQLite treats a negative LIMIT as "no limit"; v3 passed it straight through.
     return list(qs[offset:] if limit < 0 else qs[offset:offset + limit])
+
+
+# -- helpers shared by the HTML pages ------------------------------------------------
+
+def check_user_unique(
+    username: str | None = None, email: str | None = None, exclude_id: int | None = None,
+) -> None:
+    """Raise :class:`ServiceError` 400 with the API messages (``POST/PUT /users``)
+    when ``username`` or ``email`` belongs to another user."""
+    if username is not None:
+        other = get_user_by_username(username)
+        if other is not None and other.pk != exclude_id:
+            raise ServiceError(400, f"Username '{username}' already exists")
+    other = get_user_by_email(email)
+    if other is not None and other.pk != exclude_id:
+        raise ServiceError(400, f"Email '{email}' already exists")
+
+
+def audit_log_queryset(
+    user_id: int | None = None,
+    action: str | None = None,
+    resource_type: str | None = None,
+    date_from: Any = None,
+    date_to: Any = None,
+):
+    """Filtered audit entries, newest first (dates inclusive, ``date`` objects)."""
+    qs = AuditLog.objects.select_related("user")
+    if user_id is not None:
+        qs = qs.filter(user_id=user_id)
+    if action:
+        qs = qs.filter(action=action)
+    if resource_type:
+        qs = qs.filter(resource_type=resource_type)
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
+    return qs.order_by("-created_at", "-id")

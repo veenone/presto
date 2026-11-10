@@ -1,0 +1,13 @@
+{% extends "web/crud/_results.html" %}
+{% load presto %}
+{# Edit for write_role; delete only when the user also has the page's delete_role. #}
+{% block row_actions %}
+  {% if crud.can_edit %}
+    <button type="button" class="btn-round sm tone-primary" title="Edit" aria-label="Edit {{ crud.noun }} {{ row.id }}"
+            hx-get="{{ list_path }}/{{ row.id }}/edit" hx-target="#modal">{% icon "edit" %}</button>
+  {% endif %}
+  {% if can_delete_rows %}
+    <button type="button" class="btn-round sm tone-negative" title="Delete" aria-label="Delete {{ crud.noun }} {{ row.id }}"
+            hx-get="{{ list_path }}/{{ row.id }}/delete" hx-target="#modal">{% icon "delete" %}</button>
+  {% endif %}
+{% endblock %}

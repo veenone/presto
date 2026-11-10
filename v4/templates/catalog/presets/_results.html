@@ -1,0 +1,12 @@
+{% extends "web/crud/_results.html" %}
+{% load presto %}
+{% block row_actions %}
+  <button type="button" class="btn-round sm" title="View details" aria-label="View preset {{ row.id }}"
+          hx-get="{{ list_path }}/{{ row.id }}" hx-target="#modal">{% icon "visibility" %}</button>
+  {% if row.can_manage %}
+    <button type="button" class="btn-round sm tone-primary" title="Edit" aria-label="Edit Preset {{ row.id }}"
+            hx-get="{{ list_path }}/{{ row.id }}/edit" hx-target="#modal">{% icon "edit" %}</button>
+    <button type="button" class="btn-round sm tone-negative" title="Delete" aria-label="Delete Preset {{ row.id }}"
+            hx-get="{{ list_path }}/{{ row.id }}/delete" hx-target="#modal">{% icon "delete" %}</button>
+  {% endif %}
+{% endblock %}

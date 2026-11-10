@@ -1,0 +1,15 @@
+{% extends "web/crud/_form_modal.html" %}
+{% block fields %}
+  {% include "web/crud/_field.html" with field=form.name %}
+  {% include "web/crud/_field.html" with field=form.task_type %}
+  {% include "web/crud/_field.html" with field=form.base_effort_hours %}
+  {% include "catalog/_feature_picker.html" with picker=form.picker %}
+  <div class="switch-grid">
+    {% include "web/crud/_field.html" with field=form.scales_with_dut %}
+    {% include "web/crud/_field.html" with field=form.scales_with_profile %}
+    {% include "web/crud/_field.html" with field=form.is_parallelizable %}
+    {% include "web/crud/_field.html" with field=form.is_pr_fix %}
+  </div>
+  {% include "web/crud/_field.html" with field=form.product_type %}
+  {% include "web/crud/_field.html" with field=form.description %}
+{% endblock %}

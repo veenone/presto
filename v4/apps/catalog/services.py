@@ -239,6 +239,28 @@ def list_features(product_type: str | None = None, estimation_id: int | None = N
     return [feature_out(f) for f in _product_filter(qs, product_type)]
 
 
+def list_project_features(promotion_requested: bool | None = None) -> list[dict]:
+    """Project-specific (non-global) features, optionally only those flagged for promotion."""
+    qs = _feature_qs().filter(is_global=False).order_by("id")
+    if promotion_requested is not None:
+        qs = qs.filter(promotion_requested=promotion_requested)
+    return [feature_out(f) for f in qs]
+
+
+def can_manage_feature(user: User, feature: Feature) -> bool:
+    """Same rule as ``update_feature`` / ``delete_feature`` (for showing actions)."""
+    if feature.is_global:
+        return has_role(user.role, "APPROVER")
+    return user.role == "ADMIN" or _is_project_author(user, feature)
+
+
+def can_request_promotion(user: User, feature: Feature) -> bool:
+    """Same rule as ``request_feature_promotion`` (for showing the action)."""
+    if feature.is_global or not has_role(user.role, "ESTIMATOR"):
+        return False
+    return user.role == "ADMIN" or _is_project_author(user, feature)
+
+
 def get_feature_or_error(feature_id: int) -> Feature:
     feature = Feature.objects.filter(pk=feature_id).first()
     if feature is None:

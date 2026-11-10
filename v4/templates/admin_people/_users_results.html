@@ -1,0 +1,33 @@
+{% extends "web/crud/_results.html" %}
+{% load presto %}
+{% block head_lead %}
+  <th class="ap-sel" scope="col">
+    <input type="checkbox" class="ap-check" aria-label="Select all users on this page" x-data
+           @change="document.querySelectorAll('#crud-results input[name=ids]').forEach(c => c.checked = $event.target.checked)">
+  </th>
+{% endblock %}
+{% block row_lead %}
+  <td class="ap-sel"><input type="checkbox" class="ap-check" name="ids" value="{{ row.id }}" data-role="{{ row.role }}"
+         aria-label="Select {{ row.username }}"></td>
+{% endblock %}
+{% block row_actions %}
+  {% if row.is_self %}
+    <button type="button" class="btn-round sm" disabled title="You cannot deactivate your own account"
+            aria-label="You cannot deactivate your own account">{% icon "toggle_on" "tone-positive" %}</button>
+  {% else %}
+    <button type="button" class="btn-round sm" title="{% if row.is_active %}Deactivate{% else %}Activate{% endif %}"
+            aria-label="{% if row.is_active %}Deactivate{% else %}Activate{% endif %} {{ row.username }}"
+            hx-post="{{ list_path }}/{{ row.id }}/toggle-active" hx-swap="none">
+      {% if row.is_active %}{% icon "toggle_on" "tone-positive" %}{% else %}{% icon "toggle_off" "muted-icon" %}{% endif %}
+    </button>
+  {% endif %}
+  <button type="button" class="btn-round sm tone-primary" title="Edit user" aria-label="Edit user {{ row.username }}"
+          hx-get="{{ list_path }}/{{ row.id }}/edit" hx-target="#modal">{% icon "edit" %}</button>
+  {% if row.is_self %}
+    <button type="button" class="btn-round sm tone-negative" disabled title="You cannot delete your own account"
+            aria-label="You cannot delete your own account">{% icon "delete" %}</button>
+  {% else %}
+    <button type="button" class="btn-round sm tone-negative" title="Delete user" aria-label="Delete user {{ row.username }}"
+            hx-get="{{ list_path }}/{{ row.id }}/delete" hx-target="#modal">{% icon "delete" %}</button>
+  {% endif %}
+{% endblock %}

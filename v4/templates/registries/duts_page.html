@@ -1,0 +1,25 @@
+{% extends "registries/page.html" %}
+{% load presto %}
+{% block content %}<div {% include "registries/_selection.html" %}>{{ block.super }}</div>{% endblock %}
+{% block toolbar_extra %}
+  {% if can_reinit %}
+    <span class="reg-sep" aria-hidden="true"></span>
+    <button type="button" class="btn btn-flat tone-negative" hx-get="{{ list_path }}/reinit" hx-target="#modal">
+      {% icon "restart_alt" %}Reinit Registry
+    </button>
+  {% endif %}
+  {% if can_write %}
+    <template x-if="selected.length">
+      <span style="display: contents">
+        <span class="reg-sep" aria-hidden="true"></span>
+        <button type="button" class="btn btn-flat" @click="openDialog('{{ list_path }}/bulk-edit')">
+          {% icon "edit_note" %}Bulk Edit
+        </button>
+        <button type="button" class="btn btn-flat tone-negative" @click="openDialog('{{ list_path }}/bulk-delete')">
+          {% icon "delete_sweep" %}Bulk Delete
+        </button>
+        <span class="reg-selcount" x-text="selected.length + ' selected'"></span>
+      </span>
+    </template>
+  {% endif %}
+{% endblock %}

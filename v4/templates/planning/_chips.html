@@ -1,0 +1,13 @@
+{# A multiple-choice field rendered as toggle chips. #}
+<fieldset class="field chip-field">
+  <legend class="field-label">{{ field.label }}</legend>
+  <div class="chip-toggles">
+    {% for cb in field %}
+      <label class="chip-toggle">{{ cb.tag }}<span>{{ cb.choice_label }}</span></label>
+    {% empty %}
+      <span class="muted">{{ empty|default:"Nothing to choose from." }}</span>
+    {% endfor %}
+  </div>
+  {% if field.help_text %}<span class="field-help">{{ field.help_text }}</span>{% endif %}
+  {% for e in field.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+</fieldset>

@@ -1,0 +1,16 @@
+{# Alpine state for row selection (ids as strings); wraps the toolbar and the results. #}
+x-data="{
+  selected: [],
+  rowIds() { return Array.from(document.querySelectorAll('#crud-results [data-row-check]')).map(function (e) { return e.value; }); },
+  allChecked() { var ids = this.rowIds(), s = this.selected; return ids.length > 0 && ids.every(function (i) { return s.indexOf(i) >= 0; }); },
+  toggleAll(on) {
+    var ids = this.rowIds();
+    var rest = this.selected.filter(function (i) { return ids.indexOf(i) < 0; });
+    this.selected = on ? rest.concat(ids) : rest;
+  },
+  prune() { var ids = this.rowIds(); this.selected = this.selected.filter(function (i) { return ids.indexOf(i) >= 0; }); },
+  query() { return this.selected.map(function (i) { return 'ids=' + encodeURIComponent(i); }).join('&'); },
+  openDialog(url) { htmx.ajax('GET', url + '?' + this.query(), { target: '#modal' }); }
+}"
+x-on:htmx:after-settle.window="if ($event.detail.target && $event.detail.target.id === 'crud-results') prune()"
+x-on:crud-refresh.window="selected = []"
