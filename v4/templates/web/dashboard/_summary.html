@@ -1,0 +1,35 @@
+{% load presto %}
+<div id="dash-summary" class="dash-summary" hx-get="{% url 'dashboard_summary' %}" hx-trigger="every 60s"
+     hx-swap="outerHTML" hx-target="this">
+  <div class="dash-kpis" role="list" aria-label="Key figures">
+    {% for k in kpis %}
+      <div class="dash-kpi" role="listitem"{% if k.help %} title="{{ k.help }}"{% endif %}>
+        <span class="ed-eyebrow">{{ k.label }}</span>
+        <span class="dash-kpi-num">{{ k.value }}</span>
+        <span class="dash-kpi-sub">{% icon k.icon %}{{ k.sub }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <section class="ed-card dash-pipeline-card" aria-label="Pipeline state">
+    <div class="ed-card-head">
+      <span class="ed-cap">Pipeline State</span>
+      <span class="ed-eyebrow">requests → estimations → approval</span>
+    </div>
+    <ol class="dash-pipeline">
+      {% for s in pipeline %}
+        <li class="dash-stage-wrap">
+          {% if s.href %}
+            <a class="dash-stage{% if not s.count %} empty{% endif %}" href="{{ s.href }}">
+          {% else %}
+            <div class="dash-stage{% if not s.count %} empty{% endif %}">
+          {% endif %}
+              <span class="dash-stage-num">{{ s.count }}</span>
+              <span class="ed-eyebrow">{{ s.label }}</span>
+          {% if s.href %}</a>{% else %}</div>{% endif %}
+        </li>
+        {% if not forloop.last %}<li class="dash-arrow" aria-hidden="true">→</li>{% endif %}
+      {% endfor %}
+    </ol>
+  </section>
+</div>

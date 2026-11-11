@@ -1,0 +1,153 @@
+{% load presto %}
+{# Refreshable region: the edit dialog, assignment and uploads send "crud-refresh"; controls inside give their own hx-target / hx-swap. #}
+<div id="req-detail" hx-get="/requests/{{ req.id }}" hx-trigger="crud-refresh from:body" hx-target="this"
+     hx-swap="outerHTML" hx-disinherit="*">
+
+  <div class="inb-head">
+    <a class="btn-round" href="/requests" title="Back to the inbox" aria-label="Back to the inbox">{% icon "arrow_back" %}</a>
+    <h1 class="page-title inb-head-title">Request #{{ req.request_number }}</h1>
+    <div class="inb-head-actions">
+      {% if perms.edit %}
+        <button type="button" class="btn btn-outline tone-primary" hx-get="/requests/{{ req.id }}/edit" hx-target="#modal"
+                hx-swap="innerHTML" data-testid="edit-request">{% icon "edit" %}Edit</button>
+      {% endif %}
+      {% if perms.estimate %}
+        <a class="btn btn-primary inb-btn-positive" href="/estimation/new?request_id={{ req.id }}" data-testid="create-estimation">{% icon "calculate" %}Create Estimation</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <section class="ed-card inb-card" aria-labelledby="inb-details-h">
+    <div class="ed-card-head"><h2 class="ed-cap" id="inb-details-h">Request Details</h2></div>
+    <div class="inb-fields">
+      {% for col in fields %}
+        <dl class="inb-field-col">
+          {% for label, value in col %}
+            <div class="inb-field"><dt>{{ label }}</dt><dd>{% if value %}{{ value }}{% else %}<span class="muted">—</span>{% endif %}</dd></div>
+          {% endfor %}
+          {% if forloop.last %}
+            <div class="inb-field"><dt>Assigned To</dt><dd>{% if assigned_name %}{{ assigned_name }}{% else %}<span class="muted">Unassigned</span>{% endif %}</dd></div>
+          {% endif %}
+        </dl>
+      {% endfor %}
+    </div>
+    <div class="inb-text-block">
+      <div class="inb-label">Title</div>
+      <div class="inb-title-text">{{ req.title }}</div>
+    </div>
+    {% if description %}
+      <div class="inb-text-block">
+        <div class="inb-label">Description</div>
+        <div class="inb-markup" data-testid="description">{{ description }}</div>
+      </div>
+    {% endif %}
+    {% if req.notes %}
+      <div class="inb-text-block">
+        <div class="inb-label">Notes</div>
+        <div class="inb-notes">{{ req.notes|linebreaksbr }}</div>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="ed-card inb-card" aria-labelledby="inb-att-h">
+    <div class="ed-card-head">
+      <h2 class="ed-cap" id="inb-att-h">Attachments</h2>
+      <span class="ed-card-head-meta">{{ attachments|length }}</span>
+    </div>
+    {% if attachments %}
+      <ul class="inb-att-list">
+        {% for att in attachments %}
+          <li class="inb-att">
+            {% icon "attach_file" "inb-att-icon" %}
+            <div class="inb-att-main">
+              {% if att.has_file and not att.external_url %}
+                <a class="inb-att-name" href="/requests/{{ req.id }}/attachments/{{ att.index }}" download>{{ att.filename }}</a>
+              {% else %}
+                <span class="inb-att-name">{{ att.filename }}</span>
+              {% endif %}
+              {% if att.meta %}<div class="inb-att-meta">{{ att.meta }}</div>{% endif %}
+            </div>
+            {% if att.external_url %}
+              <a class="btn-round sm" href="{{ att.external_url }}" target="_blank" rel="noopener noreferrer" title="Open in the source system" aria-label="Open {{ att.filename }} in the source system">{% icon "open_in_new" %}</a>
+            {% elif att.has_file %}
+              <a class="btn-round sm tone-primary" href="/requests/{{ req.id }}/attachments/{{ att.index }}" download title="Download" aria-label="Download {{ att.filename }}">{% icon "download" %}</a>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="inb-none">No attachments.</p>
+    {% endif %}
+    {% if perms.upload %}
+      <form class="inb-upload" hx-post="/requests/{{ req.id }}/attachments" hx-encoding="multipart/form-data"
+            hx-swap="none" hx-disabled-elt="find button">
+        {% csrf_token %}
+        <label class="sr-only" for="inb-file">File to upload</label>
+        <input id="inb-file" class="input inb-file" type="file" name="file" required>
+        <button type="submit" class="btn btn-outline tone-primary">{% icon "upload" %}Upload</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <section class="ed-card inb-card" aria-labelledby="inb-assign-h">
+    <div class="ed-card-head"><h2 class="ed-cap" id="inb-assign-h">Assignment</h2></div>
+    {% if perms.assign %}
+      <form class="inb-assign" hx-post="/requests/{{ req.id }}/assign" hx-swap="none">
+        {% csrf_token %}
+        <label class="sr-only" for="inb-assignee">Assign to</label>
+        <select id="inb-assignee" name="assigned_to_id" class="input inb-assign-select">
+          <option value="">Assign to…</option>
+          {% for u in users %}
+            <option value="{{ u.id }}"{% if u.id == req.assigned_to_id %} selected{% endif %}>{{ u.display_name|default:u.username }} ({{ u.role }})</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">{% icon "person_add" %}Assign</button>
+      </form>
+    {% else %}
+      <p class="inb-none">{% if assigned_name %}Assigned to {{ assigned_name }}.{% else %}Not assigned yet.{% endif %}</p>
+    {% endif %}
+  </section>
+
+  <section class="ed-card inb-card" aria-labelledby="inb-est-h">
+    <div class="ed-card-head">
+      <h2 class="ed-cap" id="inb-est-h">Linked Estimations</h2>
+      <span class="ed-card-head-meta">{{ estimations|length }}</span>
+    </div>
+    {% if estimations %}
+      <div class="table-scroll">
+        <table class="data-table inb-est-table">
+          <thead>
+            <tr>
+              <th scope="col">Number</th><th scope="col">Project</th><th scope="col">Type</th>
+              <th scope="col" class="align-right">Total Hours</th><th scope="col" class="align-center">Feasibility</th>
+              <th scope="col" class="align-center">Status</th><th scope="col">Created</th><th scope="col" class="align-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in estimations %}
+              <tr>
+                <td class="kind-mono"><a class="inb-est-link" href="/estimation/{{ e.id }}">{{ e.number }}</a></td>
+                <td><strong>{{ e.project_name }}</strong></td>
+                <td>{{ e.project_type|default:"—" }}</td>
+                <td class="align-right kind-mono">{{ e.hours|floatformat:"1g" }}</td>
+                <td class="align-center">{% if e.feasibility %}{{ e.feasibility }}{% else %}<span class="muted">—</span>{% endif %}</td>
+                <td class="align-center">{{ e.status }}</td>
+                <td class="kind-mono">{{ e.created }}</td>
+                <td class="align-right actions">
+                  <a class="btn-round sm tone-primary" href="/estimation/{{ e.id }}" title="View estimation" aria-label="View estimation {{ e.number }}">{% icon "visibility" %}</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="inb-none-row">
+        <p class="inb-none">No estimations linked to this request yet.</p>
+        {% if perms.estimate %}
+          <a class="btn btn-flat btn-primary-text" href="/estimation/new?request_id={{ req.id }}">{% icon "add" %}Create Estimation</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+</div>

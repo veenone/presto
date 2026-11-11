@@ -1,0 +1,1 @@
+<span id="ic-lastsync" class="ic-lastsync"{% if lastsync_oob %} hx-swap-oob="true"{% endif %}>{% if p.last_sync_at %}<span title="{{ p.last_sync_at|date:'Y-m-d H:i:s' }}">Last synced: {{ p.last_sync_at|timesince }} ago</span>{% else %}Never synced.{% endif %}</span>

@@ -1,0 +1,60 @@
+{% load presto %}
+<div class="nt-bar">
+  <nav class="ed-segmented nt-segmented" aria-label="Filter notifications">
+    {% for key, label, count in segments %}
+      <a class="ed-segmented-item{% if key == filter %} active{% endif %}"{% if key == filter %} aria-current="true"{% endif %}
+         href="{% url 'notifications_page' %}{% if key != 'all' %}?filter={{ key }}{% endif %}"
+         hx-get="{% url 'notifications_page_results' %}?filter={{ key }}" hx-target="#nt-results" hx-swap="innerHTML"
+         hx-push-url="{% url 'notifications_page' %}{% if key != 'all' %}?filter={{ key }}{% endif %}">{{ label }} <span class="seg-count">{{ count }}</span></a>
+    {% endfor %}
+  </nav>
+  {% if unread %}
+    <button type="button" class="btn btn-flat btn-primary-text" hx-post="{% url 'notifications_page_read_all' %}"
+            hx-vals='{"filter": "{{ filter }}", "page": "{{ page_obj.number }}"}' hx-target="#nt-results" hx-swap="innerHTML"
+            hx-disabled-elt="this">{% icon "done_all" %}Mark all read</button>
+  {% endif %}
+</div>
+
+<div class="nt-list">
+  {% for n in notifications %}
+    <article class="notif nt-item{% if not n.is_read %} unread{% endif %}" id="nt-{{ n.pk }}">
+      <div class="nt-main">
+        <div class="notif-row">
+          <span class="badge badge-{{ n.source|lower }}">{{ n.source }}</span>
+          <span class="notif-title">{{ n.title }}</span>
+          {% if not n.is_read %}<span class="sr-only">(unread)</span>{% endif %}
+        </div>
+        {% if n.message %}<div class="notif-msg">{{ n.message }}</div>{% endif %}
+        <div class="notif-meta">
+          <span class="ed-mono" title="{{ n.created_at|timesince }} ago">{{ n.created_at|date:"Y-m-d H:i:s" }}</span>
+          {% if n.request_id %}
+            <a class="btn btn-flat btn-dense btn-primary-text" href="/requests/{{ n.request_id }}">{% icon "open_in_new" %}View request{% if n.request %} {{ n.request.request_number }}{% endif %}</a>
+          {% endif %}
+        </div>
+      </div>
+      {% if not n.is_read %}
+        <button type="button" class="btn btn-flat btn-dense nt-mark" title="Mark read" aria-label="Mark “{{ n.title }}” read"
+                hx-post="{% url 'notifications_page_read' n.pk %}" hx-vals='{"filter": "{{ filter }}", "page": "{{ page_obj.number }}"}'
+                hx-target="#nt-results" hx-swap="innerHTML" hx-disabled-elt="this">{% icon "check" %}<span class="nt-mark-label">Mark read</span></button>
+      {% endif %}
+    </article>
+  {% empty %}
+    <div class="ed-empty">{% if filter == "unread" %}No unread notifications{% else %}No notifications{% endif %}</div>
+  {% endfor %}
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+  <nav class="pager nt-pager" aria-label="Pages">
+    <span class="ed-mono">{{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+    <a class="btn-round sm{% if not page_obj.has_previous %} disabled{% endif %}" aria-label="Previous page"
+       {% if page_obj.has_previous %}href="{% url 'notifications_page' %}?{% if filter != 'all' %}filter={{ filter }}&amp;{% endif %}page={{ page_obj.previous_page_number }}"
+       hx-get="{% url 'notifications_page_results' %}?filter={{ filter }}&amp;page={{ page_obj.previous_page_number }}" hx-target="#nt-results" hx-swap="innerHTML"
+       hx-push-url="{% url 'notifications_page' %}?{% if filter != 'all' %}filter={{ filter }}&amp;{% endif %}page={{ page_obj.previous_page_number }}"{% endif %}>{% icon "chevron_left" %}</a>
+    <span class="ed-mono">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    <a class="btn-round sm{% if not page_obj.has_next %} disabled{% endif %}" aria-label="Next page"
+       {% if page_obj.has_next %}href="{% url 'notifications_page' %}?{% if filter != 'all' %}filter={{ filter }}&amp;{% endif %}page={{ page_obj.next_page_number }}"
+       hx-get="{% url 'notifications_page_results' %}?filter={{ filter }}&amp;page={{ page_obj.next_page_number }}" hx-target="#nt-results" hx-swap="innerHTML"
+       hx-push-url="{% url 'notifications_page' %}?{% if filter != 'all' %}filter={{ filter }}&amp;{% endif %}page={{ page_obj.next_page_number }}"{% endif %}>{% icon "chevron_right" %}</a>
+  </nav>
+{% endif %}
+{% if oob %}{% include "notifications/partials/_status.html" %}{% endif %}

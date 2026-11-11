@@ -101,3 +101,58 @@ def assign_request(req: Request, target_user: User) -> None:
                 adapter.update_assignee(req.external_id, target_user.username)
         except Exception:  # never break the local assignment
             logger.warning("Redmine assignee sync failed", exc_info=True)
+
+
+# ── Helpers for the web pages (no change to the API behaviour above) ──
+
+def next_request_number() -> str:
+    """Next free ``<request_number_prefix>-<year>-<NNN>`` number (v3 numbering, skipping taken ones)."""
+    from apps.integrations.service import generate_request_number
+
+    number = generate_request_number()
+    if not Request.objects.filter(request_number=number).exists():
+        return number
+    head, _, tail = number.rpartition("-")
+    n = int(tail) if tail.isdigit() else Request.objects.count() + 1
+    while True:
+        n += 1
+        candidate = f"{head}-{n:03d}"
+        if not Request.objects.filter(request_number=candidate).exists():
+            return candidate
+
+
+def create_manual_request(data: dict[str, Any]) -> Request:
+    """``create_request`` for the inbox dialog: a blank number gets the next one; duplicates are refused."""
+    from apps.core.errors import ServiceError
+
+    data = dict(data)
+    number = (data.get("request_number") or "").strip()
+    if not number:
+        number = next_request_number()
+    elif Request.objects.filter(request_number=number).exists():
+        raise ServiceError(400, f"Request number '{number}' already exists.")
+    data["request_number"] = number
+    return create_request(data)
+
+
+def attachment_file(req: Request, index: int) -> tuple[dict, Path] | None:
+    """The ``index``-th stored attachment and its file, only when the file lies under ATTACHMENTS_DIR."""
+    items = req.attachments if isinstance(req.attachments, list) else []
+    if index < 0 or index >= len(items) or not isinstance(items[index], dict):
+        return None
+    att = items[index]
+    root = Path(settings.ATTACHMENTS_DIR).resolve()
+    candidates = []
+    if att.get("filepath"):
+        candidates.append(Path(str(att["filepath"])))
+    name = os.path.basename(str(att.get("filename") or "").replace("\\", "/"))
+    if name:
+        candidates.append(root / req.request_number / name)
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except (OSError, ValueError):
+            continue
+        if root in resolved.parents and resolved.is_file():
+            return att, resolved
+    return None

@@ -290,3 +290,24 @@ class NotificationService:
             estimation_number, project_name, delivery_date, days_remaining
         )
         return self._send_email(list(recipients), subject, body)
+
+
+# ── In-app notifications (bell, notifications page) ──────────────────────────
+# Same rules as the bell views and /api/notifications: a user only ever sees
+# or changes their own rows.
+
+def user_notifications(user, unread_only: bool = False):
+    """The user's in-app notifications, newest first."""
+    from .models import WebhookNotification
+
+    qs = WebhookNotification.objects.filter(user=user)
+    return qs.filter(is_read=False) if unread_only else qs
+
+
+def mark_notification_read(user, notification_id: int) -> bool:
+    """Mark one of the user's notifications read; False when it is not theirs or does not exist."""
+    return bool(user_notifications(user).filter(pk=notification_id).update(is_read=True))
+
+
+def mark_all_notifications_read(user) -> int:
+    return user_notifications(user, unread_only=True).update(is_read=True)

@@ -1,0 +1,77 @@
+/* Dashboard (ported from the v3 dashboard CSS: KPI hero strip, pipeline flow, chart cards, activity feed). */
+
+/* ── KPI hero strip ── */
+.dash-kpis { display: grid; gap: 1px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+             border: 1px solid var(--ed-line); border-radius: var(--radius); overflow: hidden;
+             margin-bottom: 12px; background: var(--ed-line); }
+.dash-kpi { padding: 9px 14px; background: var(--content-bg); display: flex; flex-direction: column;
+            gap: 2px; min-height: 58px; min-width: 0; }
+.dash-kpi-num { font-family: var(--ed-mono); font-variant-numeric: tabular-nums; font-size: 20px;
+                font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; opacity: 0.85; margin-top: 4px; }
+.dash-kpi-sub { font-size: 11px; opacity: 0.6; display: flex; align-items: center; gap: 6px; }
+.dash-kpi-sub .icon { font-size: 14px; opacity: 0.8; }
+
+/* ── Pipeline flow ── */
+.dash-pipeline-card { padding: 18px 22px; margin-bottom: 12px; }
+.dash-pipeline-card .ed-card-head { margin-bottom: 10px; }
+.dash-pipeline { display: flex; align-items: stretch; flex-wrap: wrap; gap: 0; margin: 0; padding: 0;
+                 list-style: none; }
+.dash-stage-wrap { flex: 1 1 0; min-width: 100px; display: flex; }
+.dash-stage { flex: 1; padding: 9px 11px; border: 1px solid var(--ed-line); border-radius: var(--radius);
+              display: flex; flex-direction: column; gap: 5px; color: inherit; text-decoration: none;
+              transition: border-color 160ms ease, background 160ms ease; }
+a.dash-stage:hover { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent); }
+.dash-stage.empty { opacity: 0.4; }
+.dash-stage-num { font-family: var(--ed-mono); font-variant-numeric: tabular-nums; font-size: 19px;
+                  font-weight: 500; line-height: 1; opacity: 0.85; }
+.dash-arrow { display: flex; align-items: center; justify-content: center; padding: 0 6px; opacity: 0.4;
+              font-family: var(--ed-mono); font-size: 18px; }
+
+/* ── Chart cards (2 x n) ── */
+.dash-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.dash-chart-card { padding: 12px 14px; margin-bottom: 0; min-width: 0; }
+.dash-chart-card .ed-card-head { margin-bottom: 4px; }
+.dash-chart { width: 100%; height: 240px; }
+.dash-chart.clickable { cursor: pointer; }
+.dash-chart-empty { min-height: 240px; display: flex; flex-direction: column; align-items: center;
+                    justify-content: center; gap: 10px; }
+.dash-chart-empty .ed-empty { width: 100%; }
+
+/* ── Recent feeds ── */
+.dash-feeds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dash-feed-col { min-width: 0; }
+.dash-section-link { font-size: 12px; color: var(--primary); text-decoration: none; opacity: 0.85; }
+.dash-section-link:hover { opacity: 1; text-decoration: underline; }
+.dash-feed { list-style: none; margin: 0 0 22px; padding: 0; border: 1px solid var(--ed-line);
+             border-radius: var(--radius); overflow: hidden; }
+.dash-feed li { border-bottom: 1px dashed var(--ed-line-soft); }
+.dash-feed li:last-child { border-bottom: none; }
+.dash-feed-item { display: grid; grid-template-columns: 4px auto minmax(0, 1fr) auto auto; gap: 14px;
+                  align-items: center; padding: 10px 16px; color: inherit; text-decoration: none;
+                  transition: background 140ms ease; }
+a.dash-feed-item:hover { background: var(--ed-bg-soft); }
+.dash-feed-stripe { width: 4px; height: 32px; border-radius: 99px; background: var(--info); }
+.dash-feed-stripe.positive { background: var(--positive); }
+.dash-feed-stripe.warning { background: var(--warning); }
+.dash-feed-stripe.negative { background: var(--negative); }
+.dash-feed-id { font-family: var(--ed-mono); font-size: 12px; opacity: 0.7; white-space: nowrap; }
+.dash-feed-title { font-size: 14px; font-weight: 500; line-height: 1.3; white-space: nowrap; overflow: hidden;
+                   text-overflow: ellipsis; }
+.dash-feed-num { font-family: var(--ed-mono); font-variant-numeric: tabular-nums; font-size: 13px; }
+.dash-feed-meta { font-family: var(--ed-mono); font-size: 11px; opacity: 0.6; text-align: right; min-width: 48px; }
+
+@media (max-width: 900px) {
+  .dash-charts, .dash-feeds { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .dash-pipeline { flex-direction: column; gap: 6px; }
+  .dash-stage-wrap { min-width: 0; }
+  .dash-stage { flex-direction: row; align-items: center; justify-content: space-between; }
+  .dash-arrow { display: none; }
+  .dash-feed-item { grid-template-columns: 4px minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 12px; }
+  .dash-feed-stripe { grid-row: span 2; }
+  .dash-feed-id { grid-column: 2; grid-row: 1; }
+  .dash-feed-title { grid-column: 2 / 4; grid-row: 2; }
+  .dash-feed-num { grid-column: 3; grid-row: 1; font-size: 12px; }
+  .dash-feed-meta { display: none; }
+}

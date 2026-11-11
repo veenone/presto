@@ -1,0 +1,25 @@
+{% load presto %}
+{# Recent items feed: rows with stripe, id, title, num, age, href (None = not a link). #}
+<div class="dash-feed-col">
+  <div class="ed-section-head">
+    <span class="ed-cap">{{ feed_title }}</span>
+    {% if see_all %}<a class="dash-section-link" href="{{ see_all }}">see all →</a>{% endif %}
+  </div>
+  {% if rows %}
+    <ul class="dash-feed">
+      {% for r in rows %}
+        <li>
+          {% if r.href %}<a class="dash-feed-item" href="{{ r.href }}">{% else %}<div class="dash-feed-item">{% endif %}
+            <span class="dash-feed-stripe {{ r.stripe }}"></span>
+            <span class="dash-feed-id">{{ r.ident|default:"—" }}</span>
+            <span class="dash-feed-title" title="{{ r.title }}">{{ r.title|default:"(untitled)" }}</span>
+            <span class="dash-feed-num">{{ r.num }}</span>
+            <span class="dash-feed-meta" title="{{ r.created_at|default:'' }}">{{ r.age }}</span>
+          {% if r.href %}</a>{% else %}</div>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="ed-empty">{{ empty_text }}</div>
+  {% endif %}
+</div>

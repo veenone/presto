@@ -1,0 +1,1 @@
+<div id="ic-status" class="ed-status-now"{% if oob %} hx-swap-oob="true"{% endif %}><span class="ed-status-dot{% if enabled_count %} ic-dot-on{% endif %}"></span><span class="ed-mono">{{ enabled_count }} OF {{ total_systems }} ENABLED{% if not can_edit and not oob %} · READ ONLY{% endif %}</span></div>

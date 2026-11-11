@@ -1,0 +1,39 @@
+{% load presto %}
+<div class="field ic-field ic-kind-{{ f.kind }}{% if f.spec.wide %} ic-wide{% endif %}{% if f.error %} has-error{% endif %}">
+  {% if f.kind == "bool" %}
+    <input type="hidden" name="{{ f.key }}" value="false">
+    <label class="switch">
+      <input type="checkbox" class="switch-input" id="ic-{{ f.key }}" name="{{ f.key }}" value="true"{% if f.checked %} checked{% endif %}>
+      <span class="switch-track" aria-hidden="true"></span><span>{{ f.spec.label }}</span>
+    </label>
+  {% elif f.kind == "watchers" %}
+    {% include "integrations_config/partials/_watchers.html" %}
+  {% elif f.kind == "categories" %}
+    {% include "integrations_config/partials/_categories.html" %}
+  {% else %}
+    <label class="field-label" for="ic-{{ f.key }}">{{ f.spec.label }}</label>
+    {% if f.kind == "secret" %}
+      <div class="ic-secret">
+        <span class="badge {% if f.is_set %}ic-badge-on{% else %}ic-badge-off{% endif %}">{% if f.is_set %}set{% else %}not set{% endif %}</span>
+        {% if can_edit %}
+          <input type="password" class="input" id="ic-{{ f.key }}" name="{{ f.key }}" value="" autocomplete="new-password"
+                 placeholder="{% if f.is_set %}Type a new value to replace it{% else %}Type a value to set it{% endif %}">
+          {% if f.is_set %}<label class="ic-clear"><input type="checkbox" name="{{ f.key }}__clear" value="1"> Clear</label>{% endif %}
+        {% endif %}
+      </div>
+    {% elif f.kind == "textarea" %}
+      <textarea class="input ic-mono-input" id="ic-{{ f.key }}" name="{{ f.key }}" rows="3" spellcheck="false"{% if f.spec.placeholder %} placeholder="{{ f.spec.placeholder }}"{% endif %}{% if f.error %} aria-invalid="true"{% endif %}>{{ f.value }}</textarea>
+    {% elif f.kind == "int" %}
+      <input type="number" class="input" id="ic-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" step="1" inputmode="numeric"{% if f.spec.min is not None %} min="{{ f.spec.min }}"{% endif %}{% if f.spec.max is not None %} max="{{ f.spec.max }}"{% endif %}{% if f.error %} aria-invalid="true"{% endif %}>
+    {% elif f.kind == "choice" %}
+      <select class="input" id="ic-{{ f.key }}" name="{{ f.key }}"{% if f.error %} aria-invalid="true"{% endif %}>
+        {% for c in f.spec.choices %}<option value="{{ c }}"{% if c == f.value %} selected{% endif %}>{{ c }}</option>{% endfor %}
+        {% if f.value not in f.spec.choices %}<option value="{{ f.value }}" selected>{{ f.value|default:"—" }}</option>{% endif %}
+      </select>
+    {% else %}
+      <input type="text" class="input" id="ic-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}"{% if f.spec.placeholder %} placeholder="{{ f.spec.placeholder }}"{% endif %} autocomplete="off"{% if f.error %} aria-invalid="true"{% endif %}>
+    {% endif %}
+  {% endif %}
+  {% if f.spec.help %}<span class="field-help">{{ f.spec.help }}</span>{% endif %}
+  {% if f.error %}<span class="field-error" role="alert">{{ f.error }}</span>{% endif %}
+</div>

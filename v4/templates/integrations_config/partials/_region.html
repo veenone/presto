@@ -1,0 +1,10 @@
+{% load presto %}
+<div class="ic-tabs" role="tablist" aria-label="Integration systems">
+  {% for s in systems %}
+    <a role="tab" class="ic-tab{% if s.name == active %} active{% endif %}" aria-selected="{% if s.name == active %}true{% else %}false{% endif %}"
+       href="{% url 'integrations' %}?tab={{ s.name }}"
+       hx-get="{% url 'integrations_tab' s.name %}" hx-target="#ic-region" hx-swap="innerHTML"
+       hx-push-url="{% url 'integrations' %}?tab={{ s.name }}">{% icon s.icon %}<span>{{ s.name }}</span></a>
+  {% endfor %}
+</div>
+{% include "integrations_config/partials/_panel.html" %}

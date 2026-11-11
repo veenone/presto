@@ -1,0 +1,65 @@
+{% load presto %}
+<div id="ic-panel" class="ic-panel" role="tabpanel" aria-label="{{ p.label }} settings">
+  <form id="ic-form" class="ic-form" method="post" action="{% url 'integrations_save' p.system %}" novalidate
+        hx-post="{% url 'integrations_save' p.system %}" hx-target="#ic-panel" hx-swap="outerHTML">
+    {% csrf_token %}
+    {% if error_count %}
+      <div class="alert ic-note" role="alert">{% icon "error" %}<span>Nothing was saved: fix the {{ error_count }} highlighted field{{ error_count|pluralize }} and save again.</span></div>
+    {% endif %}
+    <fieldset class="ic-fieldset"{% if not can_edit %} disabled{% endif %}>
+      <legend class="sr-only">{{ p.label }} integration settings</legend>
+      {% for s in p.sections %}
+        <section class="ic-section">
+          <h2 class="ic-section-title">{{ s.title }}</h2>
+          {% if s.help %}<p class="field-help ic-section-help">{{ s.help }}</p>{% endif %}
+          <div class="ic-grid">
+            {% for f in s.fields %}
+              {% if f.key == "webhook_secret" %}
+                {% include "integrations_config/partials/_webhook.html" %}
+              {% else %}
+                {% include "integrations_config/partials/_field.html" %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          {% if s.extra == "pr_actions" and can_edit %}
+            <div class="ic-inline-actions">
+              <button type="button" class="btn btn-flat btn-primary-text" hx-get="{% url 'integrations_jira_pr_fetch' %}"
+                      hx-include="#ic-pr_jql_filter" hx-target="#ic-pr-result" hx-swap="innerHTML" hx-disabled-elt="this">{% icon "bug_report" %}Fetch PR Items</button>
+              <button type="button" class="btn btn-flat btn-primary-text" hx-post="{% url 'integrations_jira_pr_test' %}" hx-params="none"
+                      hx-target="#ic-pr-result" hx-swap="innerHTML" hx-disabled-elt="this">{% icon "link" %}Test PR Connection</button>
+              <span class="field-help">Tests the saved PR token (or main token if none) — save changes first.</span>
+            </div>
+            <div id="ic-pr-result" class="ic-result" aria-live="polite"></div>
+          {% endif %}
+        </section>
+      {% endfor %}
+      <section class="ic-section ic-enable">
+        <input type="hidden" name="enabled" value="false">
+        <label class="switch">
+          <input type="checkbox" class="switch-input" id="ic-enabled" name="enabled" value="true"{% if p.enabled %} checked{% endif %}>
+          <span class="switch-track" aria-hidden="true"></span><span>Enable {{ p.label }} Integration</span>
+        </label>
+      </section>
+    </fieldset>
+
+    <div class="ic-actions">
+      {% if can_edit %}
+        <button type="button" class="btn btn-flat ic-btn-test" hx-post="{% url 'integrations_test' p.system %}" hx-params="none"
+                hx-target="#ic-result" hx-swap="innerHTML" hx-disabled-elt="this">{% icon "wifi_tethering" %}Test Connection</button>
+        <button type="button" class="btn btn-flat ic-btn-sync" hx-post="{% url 'integrations_sync' p.system %}" hx-params="none"
+                hx-target="#ic-result" hx-swap="innerHTML" hx-disabled-elt="this">{% icon "sync" %}Sync</button>
+      {% endif %}
+      {% include "integrations_config/partials/_lastsync.html" %}
+      {% if can_edit %}
+        <span class="ic-grow"></span>
+        <button type="submit" class="btn btn-primary" hx-disabled-elt="this">{% icon "save" %}Save</button>
+      {% endif %}
+    </div>
+    {% if can_edit %}<p class="field-help ic-actions-help">Test Connection and Sync use the saved settings: save your changes first.</p>{% endif %}
+    <div id="ic-result" class="ic-result" aria-live="polite"></div>
+  </form>
+</div>
+{% if oob %}
+  {% include "integrations_config/partials/_strip.html" %}
+  {% include "integrations_config/partials/_status.html" %}
+{% endif %}
