@@ -19,9 +19,14 @@ class TestNavigation:
 
     def test_viewer_hidden_items(self, web_login, make_user, seeded):
         labels = nav_labels(web_login(make_user("VIEWER")))
-        hidden = {"Request Inbox", "Feature Presets", "Users", "RBAC", "Audit Log", "Backup & Restore"}
+        hidden = {"Request Inbox", "Feature Presets", "Users", "RBAC", "Audit Log", "Backup & Restore",
+                  "New Estimation"}
         assert hidden.isdisjoint(labels)
         assert {"Dashboard", "Estimations", "Feature Catalog", "Settings"} <= labels
+
+    def test_new_estimation_needs_create_permission(self, web_login, make_user, seeded):
+        assert "New Estimation" not in nav_labels(web_login(make_user("VIEWER")))
+        assert "New Estimation" in nav_labels(web_login(make_user("ESTIMATOR")))
 
     def test_estimator_sees_presets_and_inbox(self, web_login, make_user, seeded):
         labels = nav_labels(web_login(make_user("ESTIMATOR")))
@@ -37,9 +42,12 @@ class TestNavigation:
 
     def test_every_v3_page_url_exists(self, admin_client):
         from apps.estimations.models import Estimation
+        from apps.inbox.models import Request
 
         est = Estimation.objects.create(project_name="P", project_type="NEW")  # DRAFT: editable
-        details = ["/requests/1", f"/estimation/{est.pk}", f"/estimation/{est.pk}/edit"]
+        req = Request.objects.create(request_number="REQ-1", title="T", requester_name="PO",
+                                     received_date="2026-11-01")
+        details = [f"/requests/{req.pk}", f"/estimation/{est.pk}", f"/estimation/{est.pk}/edit"]
         for path in [i.path for i in ITEMS_BY_NAME.values()] + details:
             assert admin_client.get(path).status_code == 200, path
         assert admin_client.get("/estimation/999999").status_code == 404

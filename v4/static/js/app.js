@@ -96,6 +96,16 @@
     ];
   }
 
+  // Boosted navigation (sidebar links) to an error page shows that page, like a normal link would;
+  // other htmx requests keep the default (no swap, error toast).
+  document.addEventListener("htmx:beforeSwap", function (e) {
+    var cfg = e.detail.requestConfig || {};
+    if (cfg.boosted && e.detail.xhr.status >= 400 && !e.detail.xhr.getResponseHeader("HX-Redirect")) {
+      e.detail.shouldSwap = true;
+      e.detail.isError = false;
+    }
+  });
+
   // Keep GET URLs tidy (they are pushed to the address bar): drop empty and default list params.
   var LIST_DEFAULTS = { seg: "all", dir: "asc", page: "1" };
   document.addEventListener("htmx:configRequest", function (e) {

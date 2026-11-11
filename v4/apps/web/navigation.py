@@ -33,13 +33,13 @@ class NavSection:
 
 NAVIGATION: tuple[NavSection, ...] = (
     NavSection("overview", "Overview", (
-        NavItem("Dashboard", "dashboard", "dashboard", "/", phase=6),
+        NavItem("Dashboard", "dashboard", "dashboard", "/"),
         NavItem("Request Inbox", "inbox", "requests", "/requests",
-                ("view_requests", "manage_requests"), phase=6),
+                ("view_requests", "manage_requests")),
     )),
     NavSection("estimation", "Estimation", (
         NavItem("Estimations", "list_alt", "estimations", "/estimations"),
-        NavItem("New Estimation", "add_circle", "estimation_new", "/estimation/new"),
+        NavItem("New Estimation", "add_circle", "estimation_new", "/estimation/new", "create_estimations"),
     )),
     NavSection("data_management", "Data Management", (
         NavItem("Feature Catalog", "category", "features", "/features"),
@@ -58,7 +58,7 @@ NAVIGATION: tuple[NavSection, ...] = (
     )),
     NavSection("administration", "Administration", (
         NavItem("Settings", "settings", "settings", "/settings"),
-        NavItem("Integrations", "sync", "integrations", "/integrations", phase=6),
+        NavItem("Integrations", "sync", "integrations", "/integrations"),
         NavItem("Users", "manage_accounts", "users", "/users", "ADMIN"),
         NavItem("RBAC", "admin_panel_settings", "rbac", "/rbac", "ADMIN"),
         NavItem("Audit Log", "receipt_long", "audit", "/audit", "ADMIN"),

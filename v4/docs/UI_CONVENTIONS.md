@@ -81,6 +81,13 @@ Resolution order (decision D6): the user's saved choice (`users.theme_preference
 2. Open it in both themes and at phone width (no horizontal scroll); look for console errors.
 3. Compare with the v3 screenshot in `docs/v3-baseline/screenshots/`.
 
+## Gotchas found in Phase 6
+
+- Django `{# … #}` comments are single-line only; a multi-line one is rendered into the page. Use `{% comment %}…{% endcomment %}`.
+- htmx history snapshots only `#page` (`hx-history-elt` in `base_bare.html`); toasts live outside it so browser Back never revives stale Alpine nodes. Keep other Alpine-rendered global UI outside `#page` too.
+- Boosted navigation to an error page (403/404) swaps the error page in (`htmx:beforeSwap` in `app.js`); other htmx requests keep the error toast.
+- Page scripts loaded after a boosted swap run asynchronously: mark Alpine components that depend on them `x-ignore` and start them from the script (`delete el._x_ignore; Alpine.initTree(el)`), as `static/js/pages/dashboard.js` does. Keep third-party objects (ECharts instances) out of Alpine reactive data.
+
 ## Framework follow-ups (suggested while building Phase 4 pages)
 
 Pages currently work around these by overriding methods or copying template markup. Fold them into `apps/web/crud.py` and `templates/web/crud/` when a page next needs one:

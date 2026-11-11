@@ -1,6 +1,7 @@
 {% load presto %}
 <div class="popover-head">
   <h2 class="popover-title">Notifications</h2>
+  <a class="btn btn-flat btn-dense btn-primary-text" href="{% url 'notifications_page' %}">{% icon "list" %}View all</a>
   {% if notifications %}
     <button type="button" class="btn btn-flat btn-dense btn-primary-text"
             hx-post="{% url 'notifications_read_all' %}" hx-target="#notif-panel">{% icon "done_all" %}Mark all read</button>

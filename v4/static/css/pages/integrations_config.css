@@ -48,9 +48,9 @@
 
 /* Webhook secret + URL */
 .ic-webhook { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
-.ic-webhook-secret { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.ic-webhook-secret { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
 .ic-webhook-secret > .ic-field { flex: 1; min-width: 220px; margin-bottom: 0; }
-.ic-generate { margin-bottom: 2px; }
+.ic-generate { margin-top: 23px; min-height: 42px; }
 .ic-hook { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
 .ic-hook-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .ic-hook-url { flex: 1; min-width: 0; overflow-wrap: anywhere; font-family: var(--ed-mono); font-size: 12.5px;

@@ -28,7 +28,9 @@
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' data-auth="{{ user.is_authenticated|yesno:'1,0' }}"
       class="{% block body_class %}{% endblock %}">
-{% block body %}{% endblock %}
+{% comment %}htmx history snapshots only #page: the Alpine-rendered toast list stays outside, so
+restoring a snapshot (browser Back) never revives toast nodes Alpine no longer manages.{% endcomment %}
+<div id="page" hx-history-elt>{% block body %}{% endblock %}</div>
 {% include "partials/_toasts.html" %}
 </body>
 </html>

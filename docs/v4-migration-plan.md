@@ -1,6 +1,6 @@
 # PRESTO v4 — Migration Plan: Django + HTMX + Alpine.js
 
-**Status:** In progress (rev. 7: Phases 0 to 5 complete, see §17)
+**Status:** In progress (rev. 8: Phases 0 to 6 complete, all pages built, see §17)
 **Date:** 2026-11-09
 **Baseline:** v3.4.0 (FastAPI + SQLAlchemy backend, NiceGUI / Streamlit / C# WinForms frontends)
 
@@ -854,3 +854,30 @@ Intentional differences from v3:
 - PR fix hours on the detail page come from Settings instead of fixed 2/4/8; approving records the approver's name; the assign list works for approvers.
 
 Known limitation kept from v3: the wizard preview leaves out PR test-creation hours, which are added when saving (the preview labels that task "added on save").
+
+### Phase 6 — done (2026-11-11)
+
+The web UI now covers the full v3 feature set: every navigation item is a real page. Screenshots: `docs/v4-screenshots/phase6/`.
+
+| Page | Delivered |
+|------|-----------|
+| Request Inbox | Tiles, status/source/priority filters, search, add request with numbering, Redmine/Jira import with result summary, assign, create estimation from a request |
+| Request detail | Fields, safely rendered description, attachments upload/download (path-safe), edit, assign (pushed to Redmine), linked estimations |
+| Dashboard | KPI strip and pipeline (refreshed every 60 s), six ECharts charts themed for light/dark, recent estimations and requests; stats shared with `/api/dashboard/stats` |
+| Integrations | Five system tabs with every v3 field, test connection, sync, Jira PR test/fetch, Snipe-IT categories, webhook URL with secret generation, watchers, field mappings; secrets never shown |
+| Notifications | Full list with unread filter, mark read / all read, linked from the bell |
+
+Verification:
+
+- 1,411 tests pass (164 new); ruff is clean.
+- Browser sweep through the sidebar as admin (22 pages) and viewer (15 pages): no script errors, no placeholders, no horizontal scroll at phone width; dashboard charts render after sidebar navigation.
+- Fixed during integration: toasts broke browser Back after in-page URL changes (history snapshot now excludes them); a multi-line template comment leaked into every page; sidebar links to forbidden pages did nothing (error pages now shown); "New Estimation" is hidden from roles without the create permission.
+
+Intentional differences from v3:
+
+- Redmine/Jira import is also on the inbox; assign is also on list rows; request numbers are prefilled.
+- Dashboard "average estimation" label corrected to "across all estimations" (the figure always included drafts); team utilization stays 0% as in v3 (never computed).
+- Integrations: generating a webhook secret saves it and shows it once; settings the form does not manage are preserved on save; test/sync use saved settings.
+- New notifications page (v3 had only the bell, capped at 50).
+
+Next: Phase 7 (Docker image, compose, nginx, CI) and Phase 8 (remove v3 code, move v4 to the repository root, release 4.0.0).
