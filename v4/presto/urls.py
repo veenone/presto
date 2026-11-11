@@ -32,8 +32,6 @@ urlpatterns = [
     path("notifications/panel", notification_views.panel, name="notifications_panel"),
     path("notifications/<int:notification_id>/read", notification_views.mark_read, name="notification_read"),
     path("notifications/read-all", notification_views.mark_all_read, name="notifications_read_all"),
-    # Pages
-    path("", web_views.dashboard, name="dashboard"),
 ]
 
 for _module in WEB_URL_MODULES:

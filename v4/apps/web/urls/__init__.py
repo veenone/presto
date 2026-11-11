@@ -14,4 +14,7 @@ MODULES = [
     "apps.web.urls.admin_system",   # settings, backup & restore
     "apps.web.urls.estimation_pages",   # estimations list, estimation detail
     "apps.web.urls.estimation_wizard",  # new estimation, draft resume, edit / revise
+    "apps.web.urls.dashboard",      # dashboard
+    "apps.web.urls.inbox",          # request inbox list and detail
+    "apps.web.urls.integrations",   # integrations config, notifications page
 ]
