@@ -28,8 +28,8 @@ def _payload(resp) -> list[dict]:
 def _sample_data():
     for i, status in enumerate(["NEW", "NEW", "IN_ESTIMATION", "COMPLETED", "REJECTED"]):
         Request.objects.create(request_number=f"REQ_26/{i + 1:04d}", title=f"Request {i}",
-                               requester_name="R", received_date="2026-11-01", priority=["HIGH", "LOW", "MEDIUM", "CRITICAL", "LOW"][i],
-                               status=status)
+                               requester_name="R", received_date="2026-11-01",
+                               priority=["HIGH", "LOW", "MEDIUM", "CRITICAL", "LOW"][i], status=status)
     for i, (status, hours) in enumerate([("DRAFT", 100), ("DRAFT", 20), ("FINAL", 300), ("APPROVED", 516)]):
         Estimation.objects.create(project_name=f"Project {i}", project_type="NEW", status=status,
                                   grand_total_hours=hours, estimation_number=f"EST-2026-{i + 1:03d}",
