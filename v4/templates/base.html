@@ -1,0 +1,17 @@
+{% extends "base_bare.html" %}
+{% load presto %}
+{% block body %}
+<div class="app" x-data="drawer" :class="open ? 'drawer-open' : 'drawer-closed'">
+  <button type="button" class="btn-round drawer-toggle" @click="toggle()"
+          :aria-expanded="open.toString()" aria-controls="sidebar" title="Show / hide menu">
+    {% icon "menu" %}<span class="sr-only">Show or hide menu</span>
+  </button>
+  <div class="scrim" x-show="open && mobile" x-cloak @click="toggle()"></div>
+  {% include "partials/_sidebar.html" %}
+  <main class="main" id="main">
+    <div class="ed-shell">{% block content %}{% endblock %}</div>
+  </main>
+</div>
+{# Modal host lives outside the .app grid so it never takes a grid cell. #}
+<div id="modal"></div>
+{% endblock %}

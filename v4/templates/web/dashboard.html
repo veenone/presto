@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static presto %}
+{% block content %}
+<div class="dash">
+  <div class="page-head">
+    <h1 class="page-title">Dashboard</h1>
+    <span class="ed-eyebrow">Operational summary · live</span>
+  </div>
+
+  {% include "web/dashboard/_summary.html" %}
+
+  <div class="ed-section-head"><span class="ed-cap">Distribution</span></div>
+  {# x-ignore: dashboard.js removes it and starts the component once ECharts and the component are loaded. #}
+  <div class="dash-charts" x-data="dashboardCharts" x-ignore data-dash-charts>
+    {% for c in charts %}
+      <section class="ed-card dash-chart-card" aria-label="{{ c.title }}">
+        <div class="ed-card-head">
+          <span class="ed-cap">{{ c.title }}</span>
+          <span class="ed-card-head-meta">{{ c.total }} TOTAL</span>
+        </div>
+        {% if c.total %}
+          <div class="dash-chart{% if c.nav %} clickable{% endif %}" data-chart="{{ c.id }}" role="img"
+               aria-label="{{ c.title }}: {% for d in c.data %}{{ d.name }} {{ d.value }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+               {% if c.nav %}title="Click a segment to open the list"{% endif %}></div>
+        {% else %}
+          <div class="dash-chart-empty">
+            <div class="ed-empty">{{ c.empty }}</div>
+            {% if c.empty_link %}
+              <a class="btn btn-flat btn-primary-text" href="{{ c.empty_link.0 }}">{% icon c.empty_link.2 %}{{ c.empty_link.1 }}</a>
+            {% endif %}
+          </div>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </div>
+
+  <div class="dash-feeds">
+    {% include "web/dashboard/_feed.html" with feed_title="Recent Estimations" see_all="/estimations" rows=recent_estimations empty_text="No estimations yet" %}
+    {% include "web/dashboard/_feed.html" with feed_title="Recent Requests" see_all=requests_see_all rows=recent_requests empty_text="No requests yet" %}
+  </div>
+</div>
+{{ chart_payload|json_script:"dash-chart-data" }}
+{% comment %}ECharts loads once per browser tab: boosted navigation runs body scripts again, and a second
+copy would replace window.echarts under charts that are still alive.{% endcomment %}
+<script data-echarts-src="{% static 'vendor/echarts-5.6.0.min.js' %}">
+  (function (src) {
+    if (window.echarts || document.getElementById("echarts-lib")) return;
+    var s = document.createElement("script");
+    s.id = "echarts-lib"; s.src = src;
+    document.head.appendChild(s);
+  })(document.currentScript.dataset.echartsSrc);
+</script>
+<script src="{% static 'js/pages/dashboard.js' %}" defer></script>
+{% endblock %}

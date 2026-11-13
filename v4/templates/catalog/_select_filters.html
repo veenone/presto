@@ -1,0 +1,9 @@
+{# Select filters next to the search box (apps.catalog.pages.filtering). They belong to the #crud-state form, so the search box sends them too. #}
+{% for f in select_filters %}
+  <label class="ed-filter-label" for="flt-{{ f.name }}">{{ f.label }}</label>
+  <select id="flt-{{ f.name }}" name="{{ f.name }}" form="crud-state" class="input ed-filter-select"
+          hx-get="{{ list_path }}" hx-trigger="change" hx-target="#crud-results" hx-swap="outerHTML"
+          hx-include="#crud-state, #crud-search" hx-replace-url="true">
+    {% for value, label in f.choices %}<option value="{{ value }}"{% if value == f.value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+{% endfor %}

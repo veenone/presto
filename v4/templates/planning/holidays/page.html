@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static presto %}
+{% block content %}
+<div class="ed-toolbar">
+  {% if can_write %}
+    <button type="button" class="btn btn-flat btn-primary-text" hx-get="{{ list_path }}/new" hx-target="#modal">
+      {% icon "add" %}Add Holiday
+    </button>
+  {% endif %}
+  <div class="ed-toolbar-grow"></div>
+  <div class="ed-status-now"><span class="ed-status-dot"></span><span class="ed-mono" id="crud-total">TOTAL · {{ results.total }}</span></div>
+</div>
+
+<h1 class="page-title page-title-list">{{ crud.title }}</h1>
+
+{% include crud.results_template %}
+{% endblock %}

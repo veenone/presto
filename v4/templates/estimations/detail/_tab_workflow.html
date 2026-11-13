@@ -1,0 +1,66 @@
+{% load presto %}
+<div class="ed-card">
+  <div class="ed-card-head"><span class="ed-cap">Assignment</span></div>
+  <div class="est-assign">
+    <div class="est-assign-block">
+      {% if assigned_name %}
+        <span class="icon tone-primary est-assign-icon" aria-hidden="true">person</span>
+        <div><div class="ed-eyebrow">Assigned To</div><div class="est-assign-name">{{ assigned_name }}</div></div>
+      {% else %}
+        <span class="icon muted est-assign-icon" aria-hidden="true">person_off</span>
+        <div><div class="ed-eyebrow">Unassigned</div><div class="est-assign-empty">No assignee set</div></div>
+      {% endif %}
+    </div>
+    {% if perms.assign %}
+      <form class="est-assign-form" hx-post="/estimation/{{ est.id }}/assign" hx-swap="none">
+        <label class="field"><span class="field-label">Reassign to</span>
+          <select class="input" name="assigned_to_id" required>
+            <option value="">— Select a user —</option>
+            {% for u in users %}<option value="{{ u.id }}"{% if u.id == est.assigned_to_id %} selected{% endif %}>{{ u.display_name|default:u.username }} ({{ u.role }})</option>{% endfor %}
+          </select>
+        </label>
+        <button type="submit" class="btn btn-flat btn-primary-text">{% icon "person_add" %}Assign</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="ed-card">
+  <div class="ed-card-head">
+    <span class="ed-cap">Status Transitions</span>
+    <span class="ed-card-head-meta">current · {{ status }}</span>
+  </div>
+  {% if not transitions %}
+    <div class="ed-eyebrow est-pad">No further transitions from {{ status }}</div>
+  {% elif perms.status %}
+    <div class="est-transitions">
+      {% for t in transitions %}
+        <button type="button" class="btn btn-outline est-move est-move-{{ t.tone }}" hx-post="/estimation/{{ est.id }}/status"
+                hx-vals='{"status": "{{ t.target }}"}' hx-swap="none">{% icon "arrow_forward" %}Move to {{ t.target }}</button>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="est-help">Next: {% for t in transitions %}{{ t.target }}{% if not forloop.last %} or {% endif %}{% endfor %}. Changing the status needs the Estimator role.</p>
+  {% endif %}
+</div>
+
+{% if status == "APPROVED" or archived %}
+<div class="ed-card">
+  <div class="ed-card-head"><span class="ed-cap">Archive</span></div>
+  {% if archived %}
+    <p class="est-help">{% icon "inventory_2" %} Archived to <a href="/history">Historical Projects</a> as “{{ archived.project_name }}”.</p>
+  {% else %}
+    <p class="est-help">Move this approved estimation into Historical Projects for future calibration.</p>
+    {% if perms.archive %}
+      <button type="button" class="btn btn-outline est-tone-accent" hx-post="/estimation/{{ est.id }}/archive" hx-swap="none">{% icon "archive" %}Archive to History</button>
+    {% endif %}
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="ed-card">
+  <div class="ed-card-head"><span class="ed-cap">Calibration</span></div>
+  <p class="est-help">Compare this estimate with the reference projects chosen in the wizard (estimated vs actual hours).
+    {% if not has_references %}No reference projects are linked to this estimation.{% endif %}</p>
+  <button type="button" class="btn btn-outline" hx-post="/estimation/{{ est.id }}/calibrate" hx-target="#modal">{% icon "tune" %}Calibrate</button>
+</div>

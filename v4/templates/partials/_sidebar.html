@@ -1,0 +1,61 @@
+{% load presto %}
+<aside class="sidebar" id="sidebar" aria-label="Main navigation">
+  <div class="ed-side-logo">
+    {% if branding.logo_url %}<img class="ed-side-logo-img" src="{{ branding.logo_url }}" alt="">{% endif %}
+    <p class="ed-side-logo-text">PRESTO</p>
+  </div>
+
+  <div class="ed-side-user" x-data="{ panel: false }" @keydown.escape.window="panel = false">
+    <div class="ed-side-avatar" aria-hidden="true">{{ user.display_name|default:user.username|initials }}</div>
+    <div class="ed-side-user-meta">
+      <div class="ed-side-user-name" title="{{ user.display_name|default:user.username }}">{{ user.display_name|default:user.username }}</div>
+      <div class="ed-side-user-role">{{ user.role }}</div>
+    </div>
+    <button type="button" class="ed-side-bell" title="Notifications" aria-label="Notifications"
+            :aria-expanded="panel.toString()"
+            @click="panel = !panel; if (panel) htmx.ajax('GET', '{% url "notifications_panel" %}', { target: '#notif-panel' })">
+      {% icon "notifications" %}
+      <span id="bell-badge" hx-get="{% url 'notifications_badge' %}"
+            hx-trigger="load, every 30s, notifications-changed from:body" hx-swap="innerHTML"></span>
+    </button>
+    <div class="popover" x-show="panel" x-cloak x-transition.opacity @click.outside="panel = false"
+         role="dialog" aria-label="Notifications">
+      <div id="notif-panel"><div class="popover-body"><div class="ed-empty">Loading…</div></div></div>
+    </div>
+  </div>
+
+  <nav class="ed-side-nav" hx-boost="true">
+    {% for section in navigation %}
+      <div x-data="navSection('{{ section.key }}')">
+        <button type="button" class="ed-side-section-head" :class="{ collapsed: !open }" @click="toggle()"
+                :aria-expanded="open.toString()">
+          <span>{{ section.label }}</span>{% icon "expand_more" %}
+        </button>
+        <div x-show="open">
+          {% for item in section.items %}
+            <a class="ed-side-item{% if item.active %} active{% endif %}" href="{{ item.path }}"
+               {% if item.active %}aria-current="page"{% endif %}>
+              <span class="ed-side-item-stripe"></span>{% icon item.icon %}<span>{{ item.label }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </nav>
+
+  <div class="ed-side-footer">
+    <div class="ed-side-footer-row">
+      <div>
+        <button type="button" class="btn-round" @click="$store.theme.toggle()" title="Toggle theme"
+                aria-label="Toggle light or dark theme">{% icon "brightness_6" %}</button>
+        <a class="btn-round" href="{% url 'change_password' %}" title="Change password"
+           aria-label="Change password">{% icon "key" %}</a>
+      </div>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-flat btn-dense">{% icon "logout" %}Logout</button>
+      </form>
+    </div>
+    <div class="ed-side-version" title="Build version">{{ app_version }}</div>
+  </div>
+</aside>

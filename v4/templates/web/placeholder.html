@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load presto %}
+{% block content %}
+<div class="page-head"><h1 class="page-title">{{ item.label }}</h1></div>
+<div class="ed-card">
+  <div class="ed-empty">{% icon item.icon %}<br>This page is being rebuilt{% if item.phase %} (migration phase {{ item.phase }}){% endif %}.</div>
+  <p style="margin-top:16px">Its data is available now through the REST API.</p>
+  <a class="btn btn-outline" href="/api/docs">{% icon "api" %}Open API documentation</a>
+</div>
+{% endblock %}

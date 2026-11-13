@@ -1,0 +1,35 @@
+{% load presto %}
+{% if empty %}
+  <div class="ed-empty">No differences found between the two versions.</div>
+{% endif %}
+{% if diff.changes %}
+  <h3 class="est-diff-head">Field Changes</h3>
+  <div class="table-scroll"><table class="data-table">
+    <thead><tr><th scope="col">Field</th><th scope="col" class="align-right">v{{ va }}</th><th scope="col" class="align-right">v{{ vb }}</th></tr></thead>
+    <tbody>{% for c in diff.changes %}<tr><td class="kind-text">{{ c.field }}</td><td class="align-right">{% if c.version_a is None %}—{% else %}{{ c.version_a }}{% endif %}</td><td class="align-right">{% if c.version_b is None %}—{% else %}{{ c.version_b }}{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+{% endif %}
+{% if modified %}
+  <h3 class="est-diff-head">Modified Tasks</h3>
+  <div class="table-scroll"><table class="data-table">
+    <thead><tr><th scope="col">Task</th><th scope="col" class="align-right">v{{ va }} Hours</th><th scope="col" class="align-right">v{{ vb }} Hours</th><th scope="col" class="align-right">Delta</th></tr></thead>
+    <tbody>{% for m in modified %}<tr><td class="kind-text">{{ m.task_name }}</td><td class="align-right">{{ m.hours_a|floatformat:"1" }}</td><td class="align-right">{{ m.hours_b|floatformat:"1" }}</td><td class="align-right {% if m.delta > 0 %}est-up{% else %}est-down{% endif %}">{% if m.delta > 0 %}+{% endif %}{{ m.delta|floatformat:"1" }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+{% endif %}
+{% if diff.added_tasks %}
+  <h3 class="est-diff-head est-up">Added Tasks (v{{ vb }})</h3>
+  <ul class="est-diff-list">{% for t in diff.added_tasks %}<li>+ {{ t.task_name }} ({{ t.calculated_hours|floatformat:"1" }}h)</li>{% endfor %}</ul>
+{% endif %}
+{% if diff.removed_tasks %}
+  <h3 class="est-diff-head est-down">Removed Tasks (v{{ va }})</h3>
+  <ul class="est-diff-list">{% for t in diff.removed_tasks %}<li>− {{ t.task_name }} ({{ t.calculated_hours|floatformat:"1" }}h)</li>{% endfor %}</ul>
+{% endif %}
+{% if inputs %}
+  <h3 class="est-diff-head">Input Changes</h3>
+  <ul class="est-diff-list">
+    {% for i in inputs %}
+      {% if i.added %}<li class="est-up">{{ i.label }} added: {{ i.added|join:", " }}</li>{% endif %}
+      {% if i.removed %}<li class="est-down">{{ i.label }} removed: {{ i.removed|join:", " }}</li>{% endif %}
+    {% endfor %}
+  </ul>
+{% endif %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static presto %}
+{% block content %}
+<div class="ed-toolbar">
+  <button type="submit" form="rbac-form" class="btn btn-flat btn-primary-text">{% icon "save" %}Save Changes</button>
+  <button type="button" class="btn btn-flat ap-warn-text" hx-get="{% url 'rbac_reset' %}" hx-target="#modal">{% icon "restart_alt" %}Reset Defaults</button>
+  <button type="button" class="btn btn-flat" hx-get="{% url 'rbac' %}" hx-target="#rbac-body" hx-swap="outerHTML">{% icon "refresh" %}Reload</button>
+  <div class="ed-toolbar-grow"></div>
+  <div class="ed-status-now"><span class="ed-status-dot"></span><span class="ed-mono">ADMIN ONLY</span></div>
+</div>
+
+<h1 class="page-title">RBAC Management</h1>
+<p class="ed-eyebrow ap-subtitle">Configure which permissions each role grants across the application.</p>
+<p class="ap-note">{% icon "info" "tone-info" %}<span>ADMIN always has every permission. These settings drive navigation and page access in the web interface; the REST API enforces roles independently.</span></p>
+
+{% include "admin_people/_rbac_body.html" %}
+{% endblock %}

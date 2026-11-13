@@ -1,0 +1,32 @@
+{% load presto %}
+<div class="popover-head">
+  <h2 class="popover-title">Notifications</h2>
+  <a class="btn btn-flat btn-dense btn-primary-text" href="{% url 'notifications_page' %}">{% icon "list" %}View all</a>
+  {% if notifications %}
+    <button type="button" class="btn btn-flat btn-dense btn-primary-text"
+            hx-post="{% url 'notifications_read_all' %}" hx-target="#notif-panel">{% icon "done_all" %}Mark all read</button>
+  {% endif %}
+</div>
+<div class="popover-body">
+  {% for n in notifications %}
+    <div class="notif{% if not n.is_read %} unread{% endif %}">
+      <div class="notif-row">
+        <span class="badge badge-{{ n.source|lower }}">{{ n.source }}</span>
+        <span class="notif-title">{{ n.title }}</span>
+      </div>
+      {% if n.message %}<div class="notif-msg">{{ n.message }}</div>{% endif %}
+      <div class="notif-meta">
+        <span class="ed-mono">{{ n.created_at|date:"Y-m-d H:i:s" }}</span>
+        {% if n.request_id %}
+          <a class="btn btn-flat btn-dense btn-primary-text" href="/requests/{{ n.request_id }}">{% icon "open_in_new" %}View request</a>
+        {% endif %}
+        {% if not n.is_read %}
+          <button type="button" class="btn-round sm" title="Mark read" aria-label="Mark read"
+                  hx-post="{% url 'notification_read' n.pk %}" hx-target="#notif-panel">{% icon "check" %}</button>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="ed-empty">No notifications</div>
+  {% endfor %}
+</div>

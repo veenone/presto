@@ -1,0 +1,88 @@
+{% load presto %}
+<div class="wz-prs" x-data="{
+    p: {{ pr_json }}, k: 0,
+    init() { this.p.rows.forEach(r => r.k = ++this.k) },
+    get subtotal() { const n = v => Math.max(0, parseInt(v) || 0); return n(this.p.s) * this.p.hours.simple + n(this.p.m) * this.p.hours.medium + n(this.p.c) * this.p.hours.complex },
+    add() { this.p.rows.push({ k: ++this.k, num: '', link: '', pri: this.p.defaultPri, cx: 'simple', status: 'Open', desc: '', test: true, open: false }) } }">
+  <div class="wz-info">
+    <div class="wz-info-title">PR Fix Calculation:</div>
+    <ul>
+      <li>Each PR is validated per DUT (scales with DUT count)</li>
+      <li>Simple: {{ hours.simple|floatformat:"-1" }}h x DUT count, Medium: {{ hours.medium|floatformat:"-1" }}h x DUT count, Complex: {{ hours.complex|floatformat:"-1" }}h x DUT count</li>
+      <li>Total PR Fix Hours = (simple x {{ hours.simple|floatformat:"-1" }} + medium x {{ hours.medium|floatformat:"-1" }} + complex x {{ hours.complex|floatformat:"-1" }}) x DUT_count [x profile_count if enabled]</li>
+      <li>Configurable in Settings (PR hours per complexity, PR scales with profile)</li>
+    </ul>
+  </div>
+  <div class="wz-three">
+    <div class="field">
+      <label class="field-label" for="wz-prs">Simple PRs ({{ hours.simple|floatformat:"-1" }} h each)</label>
+      <input id="wz-prs" class="input" type="number" min="0" step="1" name="pr_simple" x-model="p.s"{% if errors.pr_simple %} aria-invalid="true"{% endif %}>
+      {% include "estimations/wizard/_err.html" with msg=errors.pr_simple %}
+    </div>
+    <div class="field">
+      <label class="field-label" for="wz-prm">Medium PRs ({{ hours.medium|floatformat:"-1" }} h each)</label>
+      <input id="wz-prm" class="input" type="number" min="0" step="1" name="pr_medium" x-model="p.m"{% if errors.pr_medium %} aria-invalid="true"{% endif %}>
+      {% include "estimations/wizard/_err.html" with msg=errors.pr_medium %}
+    </div>
+    <div class="field">
+      <label class="field-label" for="wz-prc">Complex PRs ({{ hours.complex|floatformat:"-1" }} h each)</label>
+      <input id="wz-prc" class="input" type="number" min="0" step="1" name="pr_complex" x-model="p.c"{% if errors.pr_complex %} aria-invalid="true"{% endif %}>
+      {% include "estimations/wizard/_err.html" with msg=errors.pr_complex %}
+    </div>
+  </div>
+  <p class="wz-subtotal">PR fix subtotal: <span class="ed-mono" x-text="subtotal + ' h'"></span> <span class="field-help">(per DUT)</span></p>
+
+  <details class="wz-expansion"{% if data.pr_details %} open{% endif %}>
+    <summary>{% icon "list" %}PR Details (optional) <span class="ed-mono" x-text="'· ' + p.rows.length"></span></summary>
+    <p class="field-help">Optionally add individual PR details for tracking. PRs without existing tests add test-creation effort when saved.</p>
+    <template x-for="(r, i) in p.rows" :key="r.k">
+      <div class="wz-pr-row">
+        <div class="wz-pr-grid">
+          <input class="input" name="pr_number" x-model="r.num" placeholder="PR #" aria-label="PR number">
+          <input class="input" name="pr_link" x-model="r.link" placeholder="Link" aria-label="Link">
+          <select class="input" name="pr_priority" aria-label="Priority">
+            <template x-for="o in p.priorities"><option :value="o" x-text="o" :selected="o === r.pri"></option></template>
+          </select>
+          <select class="input" name="pr_complexity" aria-label="Complexity">
+            <template x-for="o in p.complexities"><option :value="o" x-text="o" :selected="o === r.cx"></option></template>
+          </select>
+          <select class="input" name="pr_status" aria-label="Status">
+            <template x-for="o in p.statuses"><option :value="o" x-text="o" :selected="o === r.status"></option></template>
+          </select>
+          <button type="button" class="btn-round sm wz-remove" @click="p.rows.splice(i, 1)" aria-label="Remove PR">{% icon "close" %}</button>
+        </div>
+        <div class="wz-pr-meta">
+          <label class="switch"><input type="checkbox" class="switch-input" x-model="r.test"><span class="switch-track" aria-hidden="true"></span><span>Test Available</span></label>
+          <input type="hidden" name="pr_test" :value="r.test ? '1' : '0'">
+          <button type="button" class="btn btn-flat btn-dense" @click="r.open = !r.open" :aria-expanded="r.open.toString()">{% icon "notes" %}Description</button>
+        </div>
+        <textarea class="input" name="pr_description" x-model="r.desc" x-show="r.open" rows="4" aria-label="Description"
+                  placeholder="Supports Markdown and Jira macros, e.g. {color:#de350b}text{color}, 9{^}th{^}"></textarea>
+      </div>
+    </template>
+    <div class="wz-row">
+      <button type="button" class="btn btn-flat btn-primary-text btn-dense" @click="add()">{% icon "add" %}Add PR Detail</button>
+      <button type="button" class="btn btn-flat btn-dense" hx-post="{{ wiz.url }}/jira" hx-target="#modal" hx-swap="innerHTML"
+              {% if not jira_configured %}title="Jira integration is not configured"{% endif %}>{% icon "bug_report" %}Import from Jira</button>
+    </div>
+  </details>
+
+  <details class="wz-expansion"{% if data.document_type_ids %} open{% endif %}>
+    <summary>{% icon "description" %}Documentation Deliverables <span class="ed-mono">· {{ data.document_type_ids|length }}</span></summary>
+    <p class="field-help">Select document types to be created and specify the count for each. Document effort hours are added to the total estimation.</p>
+    {% if docs %}
+      <div class="wz-doc-grid">
+        <span class="wz-col-head">Document Type</span><span class="wz-col-head">Count</span><span class="wz-col-head">Base Hours (each)</span>
+        {% for d in docs %}
+          <input type="hidden" name="doc_all" value="{{ d.id }}">
+          <label class="wz-check"><input type="checkbox" name="doc_ids" value="{{ d.id }}"{% if d.checked %} checked{% endif %}><span>{{ d.name }}</span></label>
+          <span><input class="input wz-count-input" type="number" min="1" step="1" name="doc_count_{{ d.id }}" value="{{ d.count }}" aria-label="Count for {{ d.name }}">
+            {% include "estimations/wizard/_err.html" with msg=errors|get:d.err_key %}</span>
+          <span class="ed-mono">{{ d.hours|floatformat:1 }}h</span>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="ed-empty">No document types configured.</div>
+    {% endif %}
+  </details>
+</div>

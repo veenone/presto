@@ -1,0 +1,4 @@
+Alpine.js 3.14.9 is released under the MIT License (declared in its package.json;
+the npm package ships no separate license file).
+Copyright (c) 2019-2024 Caleb Porzio and contributors.
+See https://github.com/alpinejs/alpine/blob/main/LICENSE.md for the full text.

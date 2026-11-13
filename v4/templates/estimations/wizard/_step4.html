@@ -1,0 +1,63 @@
+{% load presto %}
+<div class="wz-matrix" x-data="{
+    d: {{ matrix_json }},
+    get selD() { return this.d.duts.filter(x => this.d.selDuts.includes(String(x.id))) },
+    get selP() { return this.d.profiles.filter(x => this.d.selProfs.includes(String(x.id))) },
+    get total() { return this.selD.length * this.selP.length },
+    get count() { return this.d.cells.filter(c => { const [a, b] = c.split(':'); return this.d.selDuts.includes(a) && this.d.selProfs.includes(b) }).length },
+    tickAll() { this.d.cells = this.selD.flatMap(x => this.selP.map(p => x.id + ':' + p.id)) },
+    clear() { this.d.cells = [] } }">
+  {% if pt and pt != "All" %}
+    <p class="wz-filter-note">{% icon "filter_alt" %}Filtered by product type: {{ pt }} (items without product type are also shown)</p>
+  {% endif %}
+  <div class="wz-two">
+    <fieldset class="wz-box">
+      <legend class="wz-sub">DUT Types <span class="ed-mono" x-text="'· ' + d.selDuts.length + ' selected'"></span></legend>
+      <div class="wz-scroll">
+        {% for x in duts %}
+          <label class="wz-check wz-list-row"><input type="checkbox" name="dut_ids" value="{{ x.id }}" x-model="d.selDuts">
+            <span>{{ x.name }}</span><span class="field-help">{{ x.category }}</span></label>
+        {% empty %}<div class="ed-empty">No DUT types found.</div>{% endfor %}
+      </div>
+      {% include "estimations/wizard/_err.html" with msg=errors.dut_ids %}
+    </fieldset>
+    <fieldset class="wz-box">
+      <legend class="wz-sub">Test Profiles <span class="ed-mono" x-text="'· ' + d.selProfs.length + ' selected'"></span></legend>
+      <div class="wz-scroll">
+        {% for x in profiles %}
+          <label class="wz-check wz-list-row"><input type="checkbox" name="profile_ids" value="{{ x.id }}" x-model="d.selProfs">
+            <span>{{ x.name }}</span></label>
+        {% empty %}<div class="ed-empty">No profiles found.</div>{% endfor %}
+      </div>
+      {% include "estimations/wizard/_err.html" with msg=errors.profile_ids %}
+    </fieldset>
+  </div>
+
+  <div class="wz-matrix-head">
+    <h3 class="wz-sub">Combination Matrix</h3>
+    <span class="ed-mono wz-count" aria-live="polite"><strong x-text="count">0</strong> / <span x-text="total">0</span> combinations</span>
+    <div class="ed-toolbar-grow"></div>
+    <button type="button" class="btn btn-flat btn-dense" @click="tickAll()" :disabled="!total">{% icon "done_all" %}Tick all</button>
+    <button type="button" class="btn btn-flat btn-dense" @click="clear()" :disabled="!count">{% icon "remove_done" %}Clear</button>
+  </div>
+  {% include "estimations/wizard/_err.html" with msg=errors.matrix %}
+  <p class="field-help" x-show="!total">Select at least one DUT and one Profile to see the matrix.</p>
+  <template x-if="total">
+    <div class="wz-matrix-scroll">
+      <table class="wz-matrix-table">
+        <thead><tr><th scope="col">DUT \ Profile</th>
+          <template x-for="p in selP" :key="p.id"><th scope="col" x-text="p.name"></th></template></tr></thead>
+        <tbody>
+          <template x-for="x in selD" :key="x.id">
+            <tr><th scope="row" x-text="x.name"></th>
+              <template x-for="p in selP" :key="p.id">
+                <td><input type="checkbox" name="matrix" :value="x.id + ':' + p.id" x-model="d.cells"
+                           :aria-label="x.name + ' × ' + p.name"></td>
+              </template>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </template>
+</div>

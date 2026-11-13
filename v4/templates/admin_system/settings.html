@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static presto %}
+{% block content %}
+<div x-data="{ dirty: false, mark(e) { if (!('nodirty' in e.target.dataset)) this.dirty = true; } }">
+  <div class="ed-toolbar">
+    {% if can_edit %}
+      <button type="submit" form="settings-form" class="btn btn-flat btn-primary-text" :disabled="!dirty" disabled>
+        {% icon "save" %}<span x-text="dirty ? 'Save Changes' : 'No changes'">No changes</span>
+      </button>
+      <span class="ed-mono st-dirty" x-show="dirty" x-cloak>● Unsaved changes</span>
+      <a href="{% url 'settings' %}" class="btn btn-flat st-warn" x-show="dirty" x-cloak
+         @click="if (!confirm('Discard unsaved changes and reload the saved values?')) $event.preventDefault()">
+        {% icon "restart_alt" %}Discard changes
+      </a>
+    {% endif %}
+    <div class="ed-toolbar-grow"></div>
+    <div class="ed-status-now"><span class="ed-status-dot"></span><span class="ed-mono">{{ total_keys }} CONFIG KEYS{% if not can_edit %} · READ ONLY{% endif %}</span></div>
+  </div>
+
+  <h1 class="page-title page-title-list">Settings</h1>
+  <p class="ed-eyebrow st-lead">Configure application behavior, branding, integrations, and authentication. Changes apply immediately after saving.</p>
+
+  {% if not can_edit %}
+    <div class="alert alert-info st-note" role="note">{% icon "lock" %}<span>Read-only view. Only administrators can change settings; secret values are never shown.</span></div>
+  {% endif %}
+
+  {% if sections %}
+    {% include "admin_system/partials/_settings_form.html" %}
+  {% else %}
+    <div class="ed-empty">No configuration entries found</div>
+  {% endif %}
+
+  {% if can_edit %}
+  <section class="ed-card st-actions" aria-labelledby="st-tests">
+    <div class="ed-card-head">
+      <span class="ed-cap" id="st-tests">Connection Tests</span>
+      <span class="ed-card-head-meta">validate integration credentials</span>
+    </div>
+    <p class="st-card-text">Tests use the saved values: save your changes first.</p>
+    <div class="st-action-row">
+      <button type="button" class="btn btn-outline" hx-post="{% url 'settings_test_smtp' %}" hx-swap="none" hx-disabled-elt="this">{% icon "mail" %}Test SMTP</button>
+      <button type="button" class="btn btn-outline" hx-post="{% url 'settings_test_ldap' %}" hx-swap="none" hx-disabled-elt="this">{% icon "domain" %}Test LDAP</button>
+      <button type="button" class="btn btn-outline" hx-post="{% url 'settings_ldap_sync' %}" hx-swap="none" hx-disabled-elt="this">{% icon "sync" %}Sync LDAP Users</button>
+    </div>
+  </section>
+
+  <section class="ed-card st-actions st-danger-card" aria-labelledby="st-maint">
+    <div class="ed-card-head">
+      <span class="ed-cap st-danger-text" id="st-maint">Maintenance</span>
+      <span class="ed-card-head-meta st-danger-text">destructive · cannot be undone</span>
+    </div>
+    <div class="st-action-row">
+      <button type="button" class="btn btn-outline st-danger-text" hx-get="{% url 'settings_maintenance' 'ldap-reset' %}" hx-target="#modal">{% icon "restart_alt" %}Reinitialize LDAP Users</button>
+      <button type="button" class="btn btn-outline st-danger-text" hx-get="{% url 'settings_maintenance' 'reinit-requests' %}" hx-target="#modal">{% icon "inbox" %}Reinitialize Request Inbox</button>
+      <button type="button" class="btn btn-outline st-danger-text" hx-get="{% url 'settings_maintenance' 'reinit-estimations' %}" hx-target="#modal">{% icon "calculate" %}Reinitialize Estimations</button>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

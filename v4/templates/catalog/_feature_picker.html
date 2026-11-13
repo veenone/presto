@@ -1,0 +1,30 @@
+{% load presto %}
+{# Feature multi-select with a filter box; with picker.hours each checked feature gets a per-feature hours input. #}
+<div class="field fp" x-data="{ q: '' }">
+  <span class="field-label" id="fp-label">{{ picker.label }}{% if picker.required %} *{% endif %}</span>
+  {% if picker.help %}<span class="field-help">{{ picker.help }}</span>{% endif %}
+  {% if picker.options|length > 6 %}
+  <input type="search" class="input fp-search" placeholder="Filter features…" aria-label="Filter features"
+         x-model="q" autocomplete="off">
+  {% endif %}
+  <div class="fp-list" role="group" aria-labelledby="fp-label">
+    {% for opt in picker.options %}
+      <div class="fp-row" x-data="{ on: {{ opt.checked|yesno:'true,false' }} }" data-name="{{ opt.search|lower }}"
+           x-show="!q || $el.dataset.name.includes(q.toLowerCase())">
+        <label class="fp-check">
+          <input type="checkbox" name="feature_ids" value="{{ opt.id }}" x-model="on"{% if opt.checked %} checked{% endif %}>
+          <span class="fp-name">{{ opt.name }}</span>
+          {% if opt.meta %}<span class="fp-meta">{{ opt.meta }}</span>{% endif %}
+        </label>
+        {% if picker.hours %}
+          <input type="number" class="input fp-hours" name="hours_{{ opt.id }}" value="{{ opt.hours|default_if_none:'' }}"
+                 min="0.1" step="0.5" placeholder="default" aria-label="Hours override for {{ opt.name }}"
+                 {% if not opt.checked %}x-cloak {% endif %}x-show="on">
+        {% endif %}
+      </div>
+    {% empty %}
+      <div class="fp-empty">No features in the catalog yet.</div>
+    {% endfor %}
+  </div>
+  {% for e in picker.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+</div>

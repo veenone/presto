@@ -1,0 +1,12 @@
+{% extends "web/crud/_form_modal.html" %}
+{% load presto %}
+{% block fields %}
+  {% for field in form %}{% include "web/crud/_field.html" %}{% endfor %}
+  {% if delete_url %}
+    <div class="modal-inline-actions">
+      <button type="button" class="btn btn-flat btn-dense tone-negative" hx-get="{{ delete_url }}" hx-target="#modal">
+        {% icon "delete" %}Delete this holiday
+      </button>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% load presto %}
+{% if messages %}
+<script type="application/json" id="initial-messages">[{% for m in messages %}{"message": "{{ m.message|escapejs }}", "level": "{{ m.tags|default:'info'|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]</script>
+{% endif %}
+<div class="toasts" x-data aria-live="polite" aria-atomic="false">
+  <template x-for="t in $store.toasts.items" :key="t.id">
+    <div class="toast" :class="'toast-' + t.level" role="status">
+      <span class="icon" x-text="t.level === 'error' ? 'error' : (t.level === 'success' ? 'check_circle' : (t.level === 'warning' ? 'warning' : 'info'))"></span>
+      <span class="toast-msg" x-text="t.message"></span>
+      <button type="button" class="toast-close" @click="$store.toasts.dismiss(t.id)" aria-label="Dismiss">{% icon "close" %}</button>
+    </div>
+  </template>
+</div>

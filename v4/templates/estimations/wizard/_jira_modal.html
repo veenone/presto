@@ -1,0 +1,42 @@
+{% load presto %}
+<div class="modal-backdrop" data-modal>
+  <div class="modal modal-lg wz-jira" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <form hx-post="{{ wiz.url }}/jira/import" hx-target="#modal" hx-include="#wizard-form" novalidate
+          x-data="{ q: '' }">
+      <div class="modal-head">
+        <h2 class="modal-title" id="modal-title">Import PR Items from Registry</h2>
+        <button type="button" class="btn btn-flat btn-dense" hx-post="{{ wiz.url }}/jira" hx-target="#modal"
+                hx-include="#wizard-form">{% icon "refresh" %}Reload</button>
+        <button type="button" class="btn-round sm" data-close-modal aria-label="Close">{% icon "close" %}</button>
+      </div>
+      <div class="modal-body">
+        <p class="field-help">PR items from the registry (configured PR JQL filter). Items already in this estimation are marked.</p>
+        {% if items %}
+          <input type="search" class="input" placeholder="Filter by key, summary or status…" aria-label="Filter PR items" x-model="q" autocomplete="off">
+          <div class="table-scroll wz-jira-scroll">
+            <table class="data-table">
+              <thead><tr><th class="align-center"><span class="sr-only">Select</span></th><th>Key</th><th>Summary</th><th>Priority</th><th>Status</th></tr></thead>
+              <tbody>
+                {% for i in items %}
+                  <tr data-s="{{ i.key|lower }} {{ i.summary|lower }} {{ i.status|lower }}" x-show="!q || $el.dataset.s.includes(q.toLowerCase())">
+                    <td class="align-center"><input type="checkbox" name="jira_item" value="{{ i.json }}" aria-label="Select {{ i.key }}"{% if i.exists %} disabled{% endif %}></td>
+                    <td class="ed-mono">{{ i.key }}{% if i.exists %} <span class="badge">added</span>{% endif %}</td>
+                    <td>{{ i.summary }}{% if i.description %}<div class="field-help wz-jira-desc">{{ i.description|truncatechars:160 }}</div>{% endif %}</td>
+                    <td>{{ i.priority }}</td>
+                    <td>{{ i.status }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="ed-empty">No PR items returned by the filter.</div>
+        {% endif %}
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-flat" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-primary"{% if not items %} disabled{% endif %}>{% icon "download" %}Import Selected</button>
+      </div>
+    </form>
+  </div>
+</div>

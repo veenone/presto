@@ -1,0 +1,50 @@
+<div class="wz-fields" x-data="{ type: '{{ data.project_type|escapejs }}' }">
+  <div class="field">
+    <label class="field-label" for="wz-name">Project Name *</label>
+    <input id="wz-name" class="input" name="project_name" value="{{ data.project_name }}" maxlength="255"
+           placeholder="e.g. SIM Toolkit v2.1 Regression" autocomplete="off"
+           {% if errors.project_name %}aria-invalid="true"{% endif %}>
+    {% include "estimations/wizard/_err.html" with msg=errors.project_name %}
+  </div>
+  <div class="field">
+    <label class="field-label" for="wz-type">Project Type</label>
+    <select id="wz-type" class="input" name="project_type" x-model="type">
+      {% for t in project_types %}<option value="{{ t }}"{% if t == data.project_type %} selected{% endif %}>{{ t }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field" x-show="type === 'CHANGE_REQUEST'"{% if data.project_type != "CHANGE_REQUEST" %} x-cloak{% endif %}>
+    <label class="field-label" for="wz-ref">Project Reference *</label>
+    <input id="wz-ref" class="input" name="project_reference" value="{{ data.project_reference|default:'' }}"
+           list="wz-ref-options" autocomplete="off" placeholder="Estimation number or project name"
+           {% if errors.project_reference %}aria-invalid="true"{% endif %}>
+    <datalist id="wz-ref-options">{% for r in reference_options %}<option value="{{ r }}">{% endfor %}</datalist>
+    {% include "estimations/wizard/_err.html" with msg=errors.project_reference %}
+  </div>
+  {% if wiz.mode == "new" %}
+  <div class="field">
+    <label class="field-label" for="wz-desc">Description (optional)</label>
+    <textarea id="wz-desc" class="input" name="description" rows="4"
+              placeholder="Briefly describe the scope or context.">{{ meta.description }}</textarea>
+  </div>
+  {% endif %}
+  <div class="field">
+    <label class="field-label" for="wz-goals">Project Goals (optional)</label>
+    <textarea id="wz-goals" class="input" name="project_goals" rows="3"
+              placeholder="What are the main goals of this project?">{{ data.project_goals|default:'' }}</textarea>
+  </div>
+  <div class="field">
+    <label class="field-label" for="wz-customer">Target Customer (optional)</label>
+    <input id="wz-customer" class="input" name="target_customer" value="{{ data.target_customer|default:'' }}"
+           placeholder="e.g. Vodafone, Deutsche Telekom" maxlength="255">
+  </div>
+  <div class="wz-sep"></div>
+  <h3 class="wz-sub">Product Type Filter</h3>
+  <p class="field-help">Select a product type to filter Features, DUTs, and Profiles in subsequent steps.</p>
+  <div class="field wz-narrow">
+    <label class="field-label" for="wz-pt">Product Type</label>
+    <select id="wz-pt" class="input" name="product_type_filter">
+      <option value="All">All</option>
+      {% for p in product_types %}<option value="{{ p }}"{% if p == data.product_type_filter %} selected{% endif %}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+</div>

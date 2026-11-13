@@ -1,0 +1,16 @@
+{% load presto %}
+<div class="error-page">
+  <div class="error-card tone-{{ page.tone }}" role="alert">
+    {% icon page.icon %}
+    <div class="error-code">ERROR {{ status }}</div>
+    <h1 class="error-title">{{ page.title }}</h1>
+    <p class="error-msg">{{ page.message }}</p>
+    {% if detail %}<p class="error-detail">{{ detail }}</p>{% endif %}
+    <div class="error-actions">
+      <button type="button" class="btn btn-flat" onclick="history.back()">{% icon "arrow_back" %}Go back</button>
+      <a class="btn btn-primary" href="{% if user.is_authenticated %}/{% else %}/login{% endif %}">
+        {% if user.is_authenticated %}{% icon "dashboard" %}Back to Dashboard{% else %}{% icon "login" %}Go to Login{% endif %}
+      </a>
+    </div>
+  </div>
+</div>

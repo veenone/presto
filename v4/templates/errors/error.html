@@ -1,0 +1,5 @@
+{% extends user.is_authenticated|yesno:"base.html,base_bare.html" %}
+{% load presto %}
+{% block title %}{{ page.title }} · PRESTO{% endblock %}
+{% block content %}{% include "errors/_card.html" %}{% endblock %}
+{% block body %}{% if user.is_authenticated %}{{ block.super }}{% else %}{% include "errors/_card.html" %}{% endif %}{% endblock %}

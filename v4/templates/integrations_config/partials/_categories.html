@@ -1,0 +1,23 @@
+{% load presto %}
+<div id="ic-cats" class="ic-picker">
+  <div class="ic-picker-head">
+    <span class="field-label">{{ f.spec.label }}</span>
+    {% if can_edit %}
+      <button type="button" class="btn btn-flat btn-dense btn-primary-text" hx-get="{% url 'integrations_snipeit_categories' %}"
+              hx-include="#ic-cats" hx-target="#ic-cats" hx-swap="outerHTML" hx-disabled-elt="this">{% icon "sync" %}Fetch Categories</button>
+    {% endif %}
+  </div>
+  {% if can_edit %}
+    <div class="ic-picker-list ic-picker-grid" role="group" aria-label="{{ f.spec.label }}">
+      {% for o in f.options %}
+        <label class="ic-check"><input type="checkbox" name="{{ f.key }}" value="{{ o.value }}"{% if o.selected %} checked{% endif %}><span class="ic-check-label">{{ o.label }}</span></label>
+      {% empty %}
+        <div class="field-help">No categories loaded yet. Save the connection, then click Fetch Categories.</div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="ic-chips">
+      {% for label in f.selected_labels %}<span class="badge ic-chip">{{ label }}</span>{% empty %}<span class="field-help">No categories selected.</span>{% endfor %}
+    </div>
+  {% endif %}
+</div>

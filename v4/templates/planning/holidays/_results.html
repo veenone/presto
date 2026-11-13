@@ -1,0 +1,88 @@
+{% load presto %}
+<div id="crud-results" hx-get="{{ links.self }}" hx-trigger="crud-refresh from:body" hx-swap="outerHTML"
+     hx-target="this" hx-disinherit="*">
+  <form id="crud-state" hidden>
+    <input type="hidden" name="seg" value="{{ state.seg }}">
+    <input type="hidden" name="sort" value="{{ state.sort }}">
+    <input type="hidden" name="dir" value="{{ state.dir }}">
+    <input type="hidden" name="month" value="{{ cal.key }}">
+  </form>
+
+  <div class="ed-strip holiday-kpis">
+    {% for tile in results.tiles %}
+      <div class="ed-strip-cell">
+        <div class="ed-eyebrow">{{ tile.label }}</div>
+        <div class="ed-strip-num">{{ tile.value }}</div>
+        {% if tile.sub %}<div class="ed-stat-tile-sub">{{ tile.sub }}</div>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="holiday-layout">
+    <section class="ed-card holiday-calendar" aria-labelledby="cal-title">
+      <div class="cal-head">
+        <a class="btn-round sm" href="{{ links.month.prev }}" hx-get="{{ links.month.prev }}" hx-target="#crud-results"
+           hx-swap="outerHTML" hx-push-url="true" title="Previous month" aria-label="Previous month">{% icon "chevron_left" %}</a>
+        <h2 class="cal-title" id="cal-title" aria-live="polite">{{ cal.label }}</h2>
+        <a class="btn-round sm" href="{{ links.month.next }}" hx-get="{{ links.month.next }}" hx-target="#crud-results"
+           hx-swap="outerHTML" hx-push-url="true" title="Next month" aria-label="Next month">{% icon "chevron_right" %}</a>
+        <a class="btn btn-flat btn-dense btn-primary-text" href="{{ links.month.today }}" hx-get="{{ links.month.today }}"
+           hx-target="#crud-results" hx-swap="outerHTML" hx-push-url="true">Today</a>
+      </div>
+
+      <div class="cal-grid" role="grid" aria-labelledby="cal-title">
+        <div class="cal-row cal-weekdays" role="row">
+          <div class="cal-wk" role="columnheader"><abbr title="ISO week number">Wk</abbr></div>
+          {% for wd in cal.weekdays %}<div class="cal-wd" role="columnheader">{{ wd }}</div>{% endfor %}
+        </div>
+        {% for week in cal.weeks %}
+          <div class="cal-row" role="row">
+            <div class="cal-wk" role="rowheader">{{ week.number }}</div>
+            {% for c in week.cells %}
+              {% if c %}
+                <div role="gridcell" class="cal-day{% if c.weekend %} is-weekend{% endif %}{% if c.today %} is-today{% endif %}{% if c.holidays %} is-holiday{% endif %}"
+                     {% if c.today %}aria-current="date"{% endif %}>
+                  {% if can_write %}
+                    <button type="button" class="cal-add" hx-get="{{ list_path }}/new?date={{ c.iso }}" hx-target="#modal"
+                            title="Add a holiday on {{ c.date|date:'j M Y' }}" aria-label="Add a holiday on {{ c.date|date:'j F Y' }}"></button>
+                  {% endif %}
+                  <span class="cal-num">{{ c.day }}</span>
+                  {% for h in c.holidays %}
+                    {% if can_write %}
+                      <button type="button" class="cal-badge" hx-get="{{ list_path }}/{{ h.id }}/edit" hx-target="#modal"
+                              title="{{ h.name }}{% if h.country %} · {{ h.country }}{% endif %}{% if h.is_recurring %} · recurring{% endif %}">{{ h.name }}</button>
+                    {% else %}
+                      <span class="cal-badge" title="{{ h.name }}{% if h.country %} · {{ h.country }}{% endif %}">{{ h.name }}</span>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div role="gridcell" class="cal-day is-outside" aria-hidden="true"></div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if can_write %}
+        <form class="ics-import" hx-post="{{ list_path }}/import-ics" hx-encoding="multipart/form-data"
+              hx-swap="none" hx-trigger="change, submit">
+          <label class="btn btn-outline btn-dense ics-pick">
+            {% icon "upload_file" %}<span>Import ICS</span>
+            <input type="file" name="file" accept=".ics,text/calendar" class="sr-only">
+          </label>
+          <span class="field-help">Pick an iCalendar (.ics) file; duplicates are skipped.</span>
+        </form>
+      {% endif %}
+    </section>
+
+    <section class="ed-card ed-card-table holiday-list" aria-labelledby="list-title">
+      <div class="ed-card-head holiday-list-head">
+        <h2 class="ed-cap" id="list-title">All Holidays</h2>
+        <span class="ed-card-head-meta">{{ results.total }} entr{{ results.total|pluralize:"y,ies" }}</span>
+      </div>
+      {% include "planning/_table.html" %}
+    </section>
+  </div>
+  <span hidden hx-swap-oob="innerHTML:#crud-total">TOTAL · {{ results.total }}</span>
+</div>

@@ -1,0 +1,29 @@
+{% load presto %}
+<div id="ic-webhook" class="ic-wide ic-webhook">
+  <div class="ic-webhook-secret">
+    {% include "integrations_config/partials/_field.html" %}
+    {% if can_edit %}
+      <button type="button" class="btn btn-outline ic-generate" hx-post="{% url 'integrations_webhook_secret' %}" hx-params="none"
+              hx-target="#ic-webhook" hx-swap="outerHTML" hx-disabled-elt="this"
+              {% if f.is_set %}hx-confirm="Replace the current webhook secret? Redmine webhook calls fail until its URL is updated with the new token."{% endif %}
+              title="Generate and save a random secure secret">{% icon "casino" %}Generate</button>
+    {% endif %}
+  </div>
+  <div class="ic-hook" x-data="{ copied: false }">
+    <span class="field-help">Webhook URL (configure in Redmine):</span>
+    <div class="ic-hook-row">
+      <code class="ic-hook-url" x-ref="url">{{ webhook_base }}{% if revealed %}?token={{ revealed }}{% elif f.is_set %}?token=&lt;webhook_secret&gt;{% endif %}</code>
+      <button type="button" class="btn-round sm" title="Copy URL" aria-label="Copy webhook URL"
+              @click="navigator.clipboard && window.isSecureContext ? navigator.clipboard.writeText($refs.url.textContent.trim()).then(() => { copied = true; $store.toasts.push('Webhook URL copied', 'success'); setTimeout(() => copied = false, 2000) }, () => $store.toasts.push('Copy failed: select the URL and copy it manually.', 'warning')) : (getSelection().selectAllChildren($refs.url), $store.toasts.push('Press Ctrl+C to copy the selected URL.', 'info'))">
+        <span x-show="!copied">{% icon "content_copy" %}</span><span x-show="copied" x-cloak>{% icon "check" %}</span>
+      </button>
+    </div>
+    {% if revealed %}
+      <div class="alert alert-warning ic-reveal" role="status">{% icon "warning" %}<span>New secret saved. This is the only time it is shown: copy the URL now and paste it into Redmine.</span></div>
+    {% elif f.is_set %}
+      <span class="field-help">Replace &lt;webhook_secret&gt; with the secret configured above. Saved secrets are never shown again{% if can_edit %}; generate a new one if it is lost{% endif %}.</span>
+    {% else %}
+      <span class="field-help">No secret is set: the webhook accepts calls without a token.{% if can_edit %} Generate one to protect it.{% endif %}</span>
+    {% endif %}
+  </div>
+</div>

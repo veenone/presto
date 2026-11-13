@@ -1,0 +1,36 @@
+{% load presto %}
+<div class="ed-card ed-card-table">
+  <div class="ed-card-head est-card-head-pad">
+    <span class="ed-cap">Document Deliverables</span>
+    <span class="ed-card-head-meta">{{ est.documentation_hours|floatformat:"1" }}h documentation total</span>
+  </div>
+  {% if deliverables %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr>
+        <th scope="col">Document Type</th><th scope="col">Category</th><th scope="col">Linked Task</th>
+        <th scope="col" class="align-right">Count</th><th scope="col" class="align-right">Total Hours</th>
+        <th scope="col" class="align-right">Effective Hours</th><th scope="col">Note</th>
+      </tr></thead>
+      <tbody>
+        {% for dd in deliverables %}
+        <tr>
+          <td class="kind-strong"><strong>{{ dd.name }}</strong></td>
+          <td class="kind-text">{{ dd.category|default:"—" }}</td>
+          <td class="kind-text">{{ dd.linked_task|default:"—" }}</td>
+          <td class="align-right">{{ dd.count }}</td>
+          <td class="align-right">{{ dd.total_hours|floatformat:"1g" }}</td>
+          <td class="align-right"><strong>{{ dd.effective_hours|floatformat:"1g" }}</strong></td>
+          <td class="kind-text">{% if dd.overlap_note %}<span class="est-overlap">{% icon "info" %}{{ dd.overlap_note }}</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if overlap_count %}
+    <p class="est-footnote">Documents linked to a task that is already part of the estimation share that task's hours: they are deducted once from the group, and the rest is split in proportion.</p>
+  {% endif %}
+  {% else %}
+    <div class="ed-empty">No document deliverables</div>
+  {% endif %}
+</div>

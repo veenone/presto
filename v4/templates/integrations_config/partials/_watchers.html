@@ -1,0 +1,23 @@
+<div class="ic-picker" x-data="{ q: '' }">
+  <div class="ic-picker-head">
+    <span class="field-label">{{ f.spec.label }}</span>
+    <span class="ed-mono ic-picker-count">{{ f.selected_labels|length }} selected</span>
+  </div>
+  {% if can_edit %}
+    <input type="search" class="input ic-picker-search" x-model="q" placeholder="Filter users…" aria-label="Filter users">
+    <div class="ic-picker-list" role="group" aria-label="{{ f.spec.label }}">
+      {% for o in f.options %}
+        <label class="ic-check" data-k="{{ o.label|lower }} {{ o.sub|lower }}" x-show="!q || $el.dataset.k.includes(q.toLowerCase())">
+          <input type="checkbox" name="{{ f.key }}" value="{{ o.value }}"{% if o.selected %} checked{% endif %}>
+          <span class="ic-check-label">{{ o.label }}</span><span class="ed-mono ic-sub">{{ o.sub }}</span>
+        </label>
+      {% empty %}
+        <div class="field-help">No active users.</div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="ic-chips">
+      {% for label in f.selected_labels %}<span class="badge ic-chip">{{ label }}</span>{% empty %}<span class="field-help">No watchers selected.</span>{% endfor %}
+    </div>
+  {% endif %}
+</div>

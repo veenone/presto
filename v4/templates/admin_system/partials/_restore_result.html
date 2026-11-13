@@ -1,0 +1,16 @@
+{% load presto %}
+{% if error %}
+  <div class="alert" role="alert">{% icon "error" %}<span>{{ error }}</span></div>
+{% else %}
+  <div class="alert st-alert-ok" role="status">
+    {% icon "check_circle" %}
+    <div>
+      <strong>Restore completed successfully!</strong>
+      {% if restored %}
+        <div>Restored from {{ filename }}: {% for name, count in restored %}{{ name }} ({{ count }}){% if not forloop.last %}, {% endif %}{% endfor %}</div>
+      {% else %}
+        <div>No tables reported.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}

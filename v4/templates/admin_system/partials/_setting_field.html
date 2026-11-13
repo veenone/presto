@@ -1,0 +1,66 @@
+{% load presto %}
+{% if f.kind == "logo" %}
+  {% include "admin_system/partials/_logo_field.html" %}
+{% else %}
+<div class="field st-field st-kind-{{ f.kind }}{% if f.error %} has-error{% endif %}">
+  {% if f.kind == "bool" %}
+    <input type="hidden" name="{{ f.key }}" value="false">
+    <label class="switch">
+      <input type="checkbox" class="switch-input" id="cfg-{{ f.key }}" name="{{ f.key }}" value="true"{% if f.checked %} checked{% endif %}>
+      <span class="switch-track" aria-hidden="true"></span><span class="ed-mono st-key">{{ f.key }}</span>
+    </label>
+  {% elif f.kind == "roles" %}
+    <div class="st-roles" role="group" aria-label="{{ f.key }}">
+      <div class="st-roles-head"><span>Application Role</span><span>External Group / Claim Value</span></div>
+      {% for role, value in f.roles %}
+        <div class="st-roles-row">
+          <label class="st-roles-role" for="cfg-{{ f.key }}-{{ role }}">{{ role }}</label>
+          <input type="text" class="input" id="cfg-{{ f.key }}-{{ role }}" name="{{ f.key }}__{{ role }}" value="{{ value }}" placeholder="Enter value for {{ role }}" autocomplete="off">
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <label class="field-label ed-mono st-key" for="cfg-{{ f.key }}">{{ f.key }}{% if f.spec.required %} *{% endif %}</label>
+    {% if f.kind == "float" or f.kind == "int" %}
+      <input type="number" class="input st-num" id="cfg-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}"
+             step="{% if f.kind == 'int' %}1{% else %}any{% endif %}"{% if f.spec.min is not None %} min="{{ f.spec.min }}"{% endif %}{% if f.spec.max is not None %} max="{{ f.spec.max }}"{% endif %}
+             inputmode="{% if f.kind == 'int' %}numeric{% else %}decimal{% endif %}"{% if f.error %} aria-invalid="true"{% endif %}>
+    {% elif f.kind == "color" %}
+      <div class="st-color" x-data="{ v: '{{ f.value|escapejs }}' }">
+        <input type="color" class="st-swatch" value="{{ f.picker_value }}" :value="/^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : '{{ f.picker_value }}'"
+               @input="v = $event.target.value.toUpperCase()" aria-label="Colour picker for {{ f.key }}">
+        <input type="text" class="input ed-mono" id="cfg-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" x-model="v"
+               maxlength="7" spellcheck="false" autocomplete="off" placeholder="#RRGGBB"{% if f.error %} aria-invalid="true"{% endif %}>
+      </div>
+    {% elif f.kind == "choice" or f.kind == "template" %}
+      <select class="input" id="cfg-{{ f.key }}" name="{{ f.key }}"{% if f.error %} aria-invalid="true"{% endif %}>
+        {% if f.kind == "choice" %}
+          {% for c in f.spec.choices %}<option value="{{ c }}"{% if c == f.value %} selected{% endif %}>{{ c }}</option>{% endfor %}
+          {% if f.value not in f.spec.choices %}<option value="{{ f.value }}" selected>{{ f.value|default:"—" }}</option>{% endif %}
+        {% else %}
+          {% for v, label in f.choices %}<option value="{{ v }}"{% if v == f.value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        {% endif %}
+      </select>
+    {% elif f.kind == "json" %}
+      <textarea class="input ed-mono" id="cfg-{{ f.key }}" name="{{ f.key }}" rows="3" spellcheck="false"{% if f.error %} aria-invalid="true"{% endif %}>{{ f.value }}</textarea>
+    {% elif f.kind == "secret" %}
+      <div class="st-secret">
+        <span class="badge {% if f.is_set %}st-badge-set{% else %}st-badge-unset{% endif %}">{% if f.is_set %}set{% else %}not set{% endif %}</span>
+        {% if can_edit %}
+          <input type="password" class="input" id="cfg-{{ f.key }}" name="{{ f.key }}" value="" autocomplete="new-password"
+                 placeholder="{% if f.is_set %}Type a new value to replace it{% else %}Type a value to set it{% endif %}">
+          {% if f.spec.clearable and f.is_set %}
+            <label class="st-clear"><input type="checkbox" name="{{ f.key }}__clear" value="1"> Clear</label>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% elif f.kind == "readonly" %}
+      <input type="text" class="input ed-mono" id="cfg-{{ f.key }}" value="{{ f.value }}" readonly>
+    {% else %}
+      <input type="text" class="input" id="cfg-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}"{% if f.spec.placeholder %} placeholder="{{ f.spec.placeholder }}"{% endif %}{% if f.error %} aria-invalid="true"{% endif %}>
+    {% endif %}
+  {% endif %}
+  {% if f.description %}<span class="field-help">{{ f.description }}{% if f.kind == "list" or f.kind == "jsonlist" %}{% if "omma" not in f.description %} (comma-separated){% endif %}{% endif %}</span>{% endif %}
+  {% if f.error %}<span class="field-error" role="alert">{{ f.error }}</span>{% endif %}
+</div>
+{% endif %}

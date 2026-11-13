@@ -1,0 +1,7 @@
+{% extends "web/crud/_form_modal.html" %}
+{% block fields %}
+  {% include "web/crud/_field.html" with field=form.name %}
+  {% include "web/crud/_field.html" with field=form.description %}
+  {% include "web/crud/_field.html" with field=form.product_type %}
+  {% include "catalog/_feature_picker.html" with picker=form.picker %}
+{% endblock %}

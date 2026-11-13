@@ -1,0 +1,98 @@
+{% load presto %}
+<div id="audit-results" hx-disinherit="*">
+  <div class="ed-strip">
+    {% for t in tiles %}
+      <a class="ed-strip-cell ed-stat-tile{% if t.key == f.action %} active{% endif %}" href="{{ t.url }}"
+         hx-get="{{ t.url }}" hx-target="#audit-results" hx-swap="outerHTML" hx-push-url="true">
+        <div class="ed-eyebrow">{{ t.label }}</div>
+        <div class="ed-strip-num">{{ t.value }}</div>
+        <div class="ed-stat-tile-sub">{{ t.sub }}</div>
+      </a>
+    {% endfor %}
+  </div>
+
+  <div class="ed-segmented" role="group" aria-label="Filter by action">
+    {% for p in pills %}
+      <a class="ed-segmented-item{% if p.key == f.action %} active{% endif %}" {% if p.key == f.action %}aria-current="true"{% endif %}
+         href="{{ p.url }}" hx-get="{{ p.url }}" hx-target="#audit-results" hx-swap="outerHTML" hx-push-url="true">
+        {{ p.label }}<span class="seg-count">· {{ p.count }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <form class="ed-filter-row ap-filters" id="audit-filters" action="{% url 'audit' %}" method="get"
+        hx-get="{% url 'audit' %}" hx-trigger="change" hx-target="#audit-results" hx-swap="outerHTML" hx-push-url="true">
+    <span class="ed-filter-label">Filter</span>
+    <label class="ap-filter"><span class="sr-only">Action</span>
+      <select class="input" name="action" aria-label="Action">
+        <option value="">All actions</option>
+        {% for a in actions %}<option value="{{ a }}"{% if a == f.action %} selected{% endif %}>{{ a }}</option>{% endfor %}
+        <option value="CHANGE"{% if f.action == "CHANGE" %} selected{% endif %}>Backup/Restore &amp; other</option>
+      </select></label>
+    <label class="ap-filter"><span class="sr-only">Resource type</span>
+      <select class="input" name="resource_type" aria-label="Resource type">
+        <option value="">All resource types</option>
+        {% for r in resource_types %}<option value="{{ r }}"{% if r == f.resource_type %} selected{% endif %}>{{ r }}</option>{% endfor %}
+      </select></label>
+    <label class="ap-filter"><span class="sr-only">User</span>
+      <select class="input" name="user" aria-label="User">
+        <option value="">All users</option>
+        {% for u in users %}<option value="{{ u.id }}"{% if u.id == f.user %} selected{% endif %}>{{ u.username }}</option>{% endfor %}
+      </select></label>
+    <label class="ap-filter ap-date"><span class="ap-date-label">From</span>
+      <input class="input" type="date" name="date_from" value="{{ date_from }}" aria-label="From date"></label>
+    <label class="ap-filter ap-date"><span class="ap-date-label">To</span>
+      <input class="input" type="date" name="date_to" value="{{ date_to }}" aria-label="To date"></label>
+    {% if has_filters %}
+      <a class="btn btn-flat btn-dense" href="{{ clear_url }}" hx-get="{{ clear_url }}" hx-target="#audit-results"
+         hx-swap="outerHTML" hx-push-url="true">{% icon "filter_alt_off" %}Clear</a>
+    {% endif %}
+    <noscript><button class="btn btn-outline btn-dense" type="submit">Apply</button></noscript>
+  </form>
+
+  <div class="ed-card ed-card-table">
+    <div class="ed-card-head ap-card-head">
+      <span class="ed-cap">Entries</span>
+      <span class="ed-card-head-meta">{{ filtered }} matching · showing latest first</span>
+    </div>
+    {% if entries %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Timestamp</th><th scope="col">User</th><th scope="col">Action</th>
+            <th scope="col">Resource Type</th><th scope="col" class="align-right">Res ID</th>
+            <th scope="col">IP Address</th><th scope="col">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in entries %}
+          <tr>
+            <td class="ap-nowrap" title="{{ e.created_at|timesince }} ago">{{ e.created_at|date:"Y-m-d H:i:s" }}</td>
+            <td>{{ e.username|default:"—" }}</td>
+            <td><span class="badge{% if e.tone %} tone-badge-{{ e.tone }}{% endif %}">{{ e.action }}</span></td>
+            <td class="kind-text">{% if e.resource_type %}{{ e.resource_type }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td class="align-right">{% if e.resource_id is not None %}{{ e.resource_id }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td>{% if e.ip_address %}{{ e.ip_address }}{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td class="ap-details">
+              {% if e.preview %}
+                <button type="button" class="ap-details-btn" hx-get="{% url 'audit_detail' e.id %}" hx-target="#modal"
+                        title="Show details" aria-label="Show details of entry {{ e.id }}">{% icon "data_object" %}<span class="ap-preview">{{ e.preview }}</span></button>
+              {% else %}<span class="muted">—</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span class="ed-mono">{{ start }}–{{ end }} of {{ filtered }} · page {{ page }}/{{ pages }}</span>
+      <a class="btn-round sm{% if not prev %} disabled{% endif %}" {% if prev %}href="{{ prev }}" hx-get="{{ prev }}" hx-target="#audit-results" hx-swap="outerHTML" hx-push-url="true"{% else %}aria-disabled="true"{% endif %} title="Previous page" aria-label="Previous page">{% icon "chevron_left" %}</a>
+      <a class="btn-round sm{% if not next %} disabled{% endif %}" {% if next %}href="{{ next }}" hx-get="{{ next }}" hx-target="#audit-results" hx-swap="outerHTML" hx-push-url="true"{% else %}aria-disabled="true"{% endif %} title="Next page" aria-label="Next page">{% icon "chevron_right" %}</a>
+    </div>
+    {% else %}
+      <div class="ed-empty">No audit entries match the current filters.</div>
+    {% endif %}
+  </div>
+  <span hidden hx-swap-oob="innerHTML:#audit-total">TOTAL · {{ total }}</span>
+</div>

@@ -1,0 +1,25 @@
+{% extends "registries/page.html" %}
+{% load presto %}
+{% block content %}<div {% include "registries/_selection.html" %} x-on:assets-imported.window="selected = []">{{ block.super }}</div>{% endblock %}
+{% block toolbar_extra %}
+  <button type="button" class="btn btn-flat" hx-post="{{ list_path }}/refresh" hx-swap="none">{% icon "refresh" %}Refresh</button>
+  {% if can_import %}
+    <span class="reg-sep" aria-hidden="true"></span>
+    <form hx-post="{{ list_path }}/import" hx-swap="none" style="display: contents">
+      <template x-for="id in selected" :key="id"><input type="hidden" name="ids" :value="id"></template>
+      <button type="submit" class="btn btn-flat btn-primary-text" :disabled="!selected.length"
+              title="Select assets in the table first">{% icon "download" %}Import as DUT</button>
+    </form>
+    <span class="reg-selcount" x-show="selected.length" x-cloak x-text="selected.length + ' selected'"></span>
+  {% endif %}
+  <span class="reg-sep" aria-hidden="true"></span>
+  <a class="btn btn-flat" href="{% url 'duts' %}">{% icon "devices" %}Open DUT Registry</a>
+{% endblock %}
+{% block above_results %}
+  {% if not configured %}
+    <div class="alert alert-info reg-banner" role="status">{% icon "info" %}<span>The Snipe-IT integration is not configured or not enabled.
+      Please configure it under Settings &gt; Integrations before using this page.</span></div>
+  {% elif load_error %}
+    <div class="alert alert-warning reg-banner" role="alert">{% icon "warning" %}<span>{{ load_error }}</span></div>
+  {% endif %}
+{% endblock %}

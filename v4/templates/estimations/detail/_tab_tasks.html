@@ -1,0 +1,38 @@
+{% load presto %}
+<div class="ed-card ed-card-table">
+  <div class="ed-card-head est-card-head-pad">
+    <span class="ed-cap">Task Breakdown</span>
+    <span class="ed-card-head-meta">{{ tasks|length }} tasks · {{ tasks_total|floatformat:"1g" }}h total{% if synthetic_count %} · {{ synthetic_count }} computed{% endif %}</span>
+  </div>
+  {% if tasks %}
+  <div class="table-scroll">
+    <table class="data-table est-tasks">
+      <thead><tr>
+        <th scope="col">Feature</th><th scope="col">Task</th><th scope="col">Type</th>
+        <th scope="col" class="align-right">Base h</th><th scope="col">Formula</th>
+        <th scope="col" class="align-right">Calc h</th><th scope="col" class="align-center">Resources</th>
+        <th scope="col" class="align-center">Study</th>
+      </tr></thead>
+      <tbody>
+        {% for t in tasks %}
+        <tr{% if t.synthetic %} class="est-synthetic"{% endif %}>
+          <td class="kind-text">{% if t.feature_name %}<span class="est-feature-tag">{{ t.feature_name }}</span>{% elif t.synthetic %}<span class="muted est-italic">Computed</span>{% else %}<span class="muted est-italic">Global</span>{% endif %}</td>
+          <td class="kind-text">
+            <strong>{{ t.task_name }}</strong>
+            {% if t.synthetic and t.notes %}<div class="est-task-note">{{ t.notes }}</div>{% endif %}
+          </td>
+          <td><span class="badge">{{ t.task_type }}</span></td>
+          <td class="align-right">{{ t.base_hours|floatformat:"1g" }}</td>
+          <td class="est-formula">{{ t.formula|default:"" }}</td>
+          <td class="align-right"><strong>{{ t.calculated_hours|floatformat:"1g" }}</strong></td>
+          <td class="align-center">{% if t.synthetic %}<span class="muted">—</span>{% else %}{{ t.assigned_testers }}{% endif %}</td>
+          <td class="align-center">{% if t.is_new_feature_study %}<span class="est-star" title="New feature study">★</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="ed-empty">No task breakdown available</div>
+  {% endif %}
+</div>

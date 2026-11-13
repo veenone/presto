@@ -1,0 +1,18 @@
+{% load presto %}
+<div class="modal-backdrop" data-modal>
+  <div class="modal modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+    <form hx-post="{{ action }}" hx-target="#modal">
+      {% csrf_token %}
+      {% for d in duts %}<input type="hidden" name="ids" value="{{ d.id }}">{% endfor %}
+      <div class="modal-head"><h2 class="modal-title" id="modal-title">Bulk Delete DUT Types</h2></div>
+      <div class="modal-body">
+        <p id="modal-desc" class="reg-danger-text">Delete {{ duts|length }} selected DUT type(s)? This cannot be undone.</p>
+        {% with items=duts %}{% include "registries/_selected_list.html" %}{% endwith %}
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-flat" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-danger">{% icon "delete" %}Delete</button>
+      </div>
+    </form>
+  </div>
+</div>

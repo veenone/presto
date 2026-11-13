@@ -1,0 +1,307 @@
+[
+  {
+    "key": "auto_create_historical_project",
+    "value": "manual",
+    "description": "When to auto-create historical project from estimation: manual, on_approve, on_complete"
+  },
+  {
+    "key": "buffer_percentage",
+    "value": "10",
+    "description": "Additional percentage buffer for unknowns"
+  },
+  {
+    "key": "button_color_dark",
+    "value": "#90CAF9",
+    "description": "Primary button color for dark mode"
+  },
+  {
+    "key": "button_color_light",
+    "value": "#1976D2",
+    "description": "Primary button color for light mode"
+  },
+  {
+    "key": "calendar_today_bg_dark",
+    "value": "#37474f",
+    "description": "Calendar today cell background color (dark mode)"
+  },
+  {
+    "key": "calendar_today_bg_light",
+    "value": "#e0e0e0",
+    "description": "Calendar today cell background color (light mode)"
+  },
+  {
+    "key": "calendar_weekend_bg_dark",
+    "value": "#263238",
+    "description": "Calendar weekend cell background color (dark mode)"
+  },
+  {
+    "key": "calendar_weekend_bg_light",
+    "value": "#f0f0f0",
+    "description": "Calendar weekend cell background color (light mode)"
+  },
+  {
+    "key": "content_bg_dark",
+    "value": "#121212",
+    "description": "Content area background color for dark mode"
+  },
+  {
+    "key": "content_bg_light",
+    "value": "#FAFAFA",
+    "description": "Content area background color for light mode"
+  },
+  {
+    "key": "dut_categories",
+    "value": "SIM,eSIM,UICC,IoT Device,Mobile Device,Other",
+    "description": "Comma-separated list of DUT type categories for dropdown menus"
+  },
+  {
+    "key": "estimation_number_prefix",
+    "value": "EST",
+    "description": "Prefix for auto-generated estimation numbers"
+  },
+  {
+    "key": "feature_categories",
+    "value": "Telecom,Security,Platform,Other",
+    "description": "Comma-separated list of feature categories for dropdown menus"
+  },
+  {
+    "key": "jwt_secret",
+    "value": "",
+    "description": "JWT signing secret (auto-generated on first use)"
+  },
+  {
+    "key": "label_deadline",
+    "value": "Deadline (optional)",
+    "description": "Wizard field label for the delivery deadline date"
+  },
+  {
+    "key": "label_project_start_date",
+    "value": "Project Start Date - T0 (optional)",
+    "description": "Wizard field label for the project start date"
+  },
+  {
+    "key": "label_testing_start_date",
+    "value": "Testing Start Date (optional)",
+    "description": "Wizard field label for the testing start date"
+  },
+  {
+    "key": "ldap_bind_dn",
+    "value": "",
+    "description": "LDAP bind distinguished name"
+  },
+  {
+    "key": "ldap_bind_password",
+    "value": "",
+    "description": "LDAP bind password"
+  },
+  {
+    "key": "ldap_group_mapping_json",
+    "value": "{}",
+    "description": "JSON mapping of app roles to AD groups"
+  },
+  {
+    "key": "ldap_search_base",
+    "value": "",
+    "description": "LDAP search base DN"
+  },
+  {
+    "key": "ldap_url",
+    "value": "",
+    "description": "LDAP/AD server URL"
+  },
+  {
+    "key": "ldap_user_filter",
+    "value": "(sAMAccountName={username})",
+    "description": "LDAP user search filter"
+  },
+  {
+    "key": "leader_effort_ratio",
+    "value": "0.5",
+    "description": "Test leader gets this fraction of total tester effort"
+  },
+  {
+    "key": "logo_height",
+    "value": "40",
+    "description": "Logo image height in pixels"
+  },
+  {
+    "key": "logo_url",
+    "value": "",
+    "description": "URL or path to custom logo image"
+  },
+  {
+    "key": "new_feature_study_hours",
+    "value": "16.0",
+    "description": "Hours to study and create tests for a new feature"
+  },
+  {
+    "key": "oidc_client_id",
+    "value": "",
+    "description": "OIDC client ID"
+  },
+  {
+    "key": "oidc_client_secret",
+    "value": "",
+    "description": "OIDC client secret"
+  },
+  {
+    "key": "oidc_issuer",
+    "value": "",
+    "description": "OpenID Connect issuer URL"
+  },
+  {
+    "key": "oidc_redirect_uri",
+    "value": "",
+    "description": "OIDC redirect URI"
+  },
+  {
+    "key": "oidc_role_claim",
+    "value": "roles",
+    "description": "OIDC claim containing user roles"
+  },
+  {
+    "key": "oidc_role_mapping_json",
+    "value": "{}",
+    "description": "JSON mapping of app roles to OIDC roles"
+  },
+  {
+    "key": "oidc_scopes",
+    "value": "openid profile email",
+    "description": "OIDC scopes to request"
+  },
+  {
+    "key": "outline_auto_export_states",
+    "value": "",
+    "description": "Comma-separated statuses that trigger auto-export to Outline wiki (e.g. FINAL,APPROVED)"
+  },
+  {
+    "key": "pr_fix_base_hours",
+    "value": "4.0",
+    "description": "Average hours per PR fix for testing"
+  },
+  {
+    "key": "pr_hours_complex",
+    "value": "8.0",
+    "description": "Hours per complex PR fix validation"
+  },
+  {
+    "key": "pr_hours_medium",
+    "value": "4.0",
+    "description": "Hours per medium PR fix validation"
+  },
+  {
+    "key": "pr_hours_simple",
+    "value": "2.0",
+    "description": "Hours per simple PR fix validation"
+  },
+  {
+    "key": "pr_no_test_hours",
+    "value": "8.0",
+    "description": "Hours to create tests when PR has no existing test available"
+  },
+  {
+    "key": "pr_no_test_task_template_id",
+    "value": "",
+    "description": "Task template ID linked to PR test creation effort (optional)"
+  },
+  {
+    "key": "pr_priority_list",
+    "value": "LOW,MEDIUM,HIGH,CRITICAL",
+    "description": "Comma-separated PR priority levels used in PR detail entries (maps to Jira priorities)"
+  },
+  {
+    "key": "pr_scales_with_profile",
+    "value": "false",
+    "description": "Whether PR fix validation effort scales with profile count"
+  },
+  {
+    "key": "product_types",
+    "value": "[\"Payment\", \"Telco\"]",
+    "description": "JSON array of available product types for categorization"
+  },
+  {
+    "key": "project_types",
+    "value": "NEW,EVOLUTION,SUPPORT,CHANGE_REQUEST",
+    "description": "Comma-separated list of project types for estimation wizard"
+  },
+  {
+    "key": "release_effort_factor",
+    "value": "0.5",
+    "description": "Fraction of (tester + leader) hours added per additional release (0.5 = 50%)"
+  },
+  {
+    "key": "release_effort_task_types",
+    "value": "EXECUTION",
+    "description": "Comma-separated task types affected by release effort multiplier (e.g. EXECUTION,REVIEW)"
+  },
+  {
+    "key": "request_number_prefix",
+    "value": "REQ",
+    "description": "Prefix for auto-generated request numbers"
+  },
+  {
+    "key": "sidebar_bg_dark",
+    "value": "#1D1D1D",
+    "description": "Sidebar background color for dark mode"
+  },
+  {
+    "key": "sidebar_bg_light",
+    "value": "#FFFFFF",
+    "description": "Sidebar background color for light mode"
+  },
+  {
+    "key": "smtp_from",
+    "value": "",
+    "description": "SMTP sender email address"
+  },
+  {
+    "key": "smtp_host",
+    "value": "",
+    "description": "SMTP server hostname for notifications"
+  },
+  {
+    "key": "smtp_password",
+    "value": "",
+    "description": "SMTP password"
+  },
+  {
+    "key": "smtp_port",
+    "value": "587",
+    "description": "SMTP server port"
+  },
+  {
+    "key": "smtp_tls",
+    "value": "true",
+    "description": "Use TLS for SMTP"
+  },
+  {
+    "key": "smtp_user",
+    "value": "",
+    "description": "SMTP username"
+  },
+  {
+    "key": "table_header_bg_dark",
+    "value": "#424242",
+    "description": "Table header background color for dark mode (hex)"
+  },
+  {
+    "key": "table_header_bg_light",
+    "value": "#E0E0E0",
+    "description": "Table header background color for light mode (hex)"
+  },
+  {
+    "key": "team_skills",
+    "value": "[\"Test Execution\",\"Test Design\",\"Automation\",\"Performance\",\"Security\",\"API Testing\",\"Mobile Testing\",\"Regression\"]",
+    "description": "JSON array of available team member skills for selection"
+  },
+  {
+    "key": "webhook_watchers",
+    "value": "[]",
+    "description": "JSON array of user IDs to notify on webhook imports"
+  },
+  {
+    "key": "working_hours_per_day",
+    "value": "7.0",
+    "description": "Productive hours per working day"
+  }
+]

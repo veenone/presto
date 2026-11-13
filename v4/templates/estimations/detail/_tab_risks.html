@@ -1,0 +1,38 @@
+{% load presto %}
+<div class="ed-card ed-card-table">
+  <div class="ed-card-head est-card-head-pad">
+    <span class="ed-cap">Risk Registry Items</span>
+    <span class="ed-card-head-meta">{{ risks.items|length }} flagged</span>
+  </div>
+  {% if risks.items %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th scope="col">Risk</th><th scope="col">Category</th><th scope="col" class="align-center">Likelihood</th><th scope="col" class="align-center">Impact</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        {% for r in risks.items %}
+        <tr>
+          <td class="kind-strong"><strong>{{ r.risk_item_name|default:"Unknown" }}</strong></td>
+          <td class="kind-text">{{ r.risk_item_category|default:"—" }}</td>
+          <td class="align-center"><span class="badge est-level est-level-{{ r.risk_item_likelihood }}">{{ r.risk_item_likelihood|default:"—" }}</span></td>
+          <td class="align-center"><span class="badge est-level est-level-{{ r.risk_item_impact }}">{{ r.risk_item_impact|default:"—" }}</span></td>
+          <td class="kind-text">{{ r.notes|default:"" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="ed-empty">No risks selected from the registry</div>
+  {% endif %}
+</div>
+
+<div class="ed-card">
+  <div class="ed-card-head"><span class="ed-cap">Automatic Risk Assessment</span><span class="ed-card-head-meta">{{ risks.assessment|length }} message{{ risks.assessment|length|pluralize }}</span></div>
+  {% if risks.assessment %}
+    <ul class="est-risk-list">
+      {% for m in risks.assessment %}<li>{% icon "report" %}<span>{{ m }}</span></li>{% endfor %}
+    </ul>
+  {% else %}
+    <div class="ed-empty">No risks detected</div>
+  {% endif %}
+</div>

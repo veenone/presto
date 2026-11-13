@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load presto %}
+{% block content %}
+<div class="nt-page">
+  <div class="ed-toolbar">
+    <span class="ed-eyebrow">Notifications</span>
+    <div class="ed-toolbar-grow"></div>
+    {% include "notifications/partials/_status.html" %}
+  </div>
+  <h1 class="page-title page-title-list">Notifications</h1>
+  <p class="ed-eyebrow nt-lead">Everything sent to you: imported requests, webhook events and workflow updates.</p>
+  <div id="nt-results" class="nt-results">
+    {% include "notifications/partials/_results.html" %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load static presto %}
+{% block content %}
+<div class="ed-toolbar">
+  <button type="button" class="btn btn-flat btn-primary-text" hx-get="{{ self_url }}" hx-target="#audit-results"
+          hx-swap="outerHTML">{% icon "refresh" %}Refresh</button>
+  <div class="ed-toolbar-grow"></div>
+  <div class="ed-status-now"><span class="ed-status-dot"></span><span class="ed-mono" id="audit-total">TOTAL · {{ total }}</span></div>
+</div>
+<h1 class="page-title page-title-list">Audit Log</h1>
+{% include "admin_people/_audit_results.html" %}
+{% endblock %}

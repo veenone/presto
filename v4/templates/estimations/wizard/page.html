@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load presto %}
+{% block content %}
+<div class="ed-toolbar wz-toolbar">
+  <a class="btn-round" href="{% if estimation %}/estimation/{{ estimation.id }}{% else %}/estimations{% endif %}"
+     title="{% if estimation %}Back to estimation{% else %}Back to estimations{% endif %}">{% icon "arrow_back" %}<span class="sr-only">Back</span></a>
+  <span class="ed-eyebrow">{{ eyebrow }}</span>
+  <span class="ed-mono wz-toolbar-title" id="wz-title">{{ rail.title }}</span>
+  <div class="ed-toolbar-grow"></div>
+  {% if request_obj %}<span class="ed-mono wz-req">REQ · {{ request_obj.request_number }}</span>{% endif %}
+  {% if wiz.autosave %}
+    {# Autosave: 5 s after load / after the first input, then every 30 s; the server skips unchanged state. #}
+    <span id="autosave-label" class="ed-mono wz-autosave" aria-live="polite"
+          hx-post="{{ wiz.url }}/autosave" hx-trigger="load delay:5s, input from:body once delay:5s, every 30s"
+          hx-include="#wizard-form" hx-target="this" hx-swap="innerHTML" hx-sync="#wizard:queue all"></span>
+    <button type="button" class="btn btn-flat btn-primary-text btn-dense" hx-post="{{ wiz.url }}/save-draft"
+            hx-include="#wizard-form" hx-target="#autosave-label" hx-swap="innerHTML" hx-sync="#wizard:queue all"
+            title="Save current progress as a draft — resume later from Estimations">{% icon "save" %}Save draft</button>
+  {% endif %}
+</div>
+
+<h1 class="page-title wz-title">{{ heading }}</h1>
+{% if is_revision %}
+  <div class="alert alert-info wz-banner" role="note">{% icon "history" %}
+    <span>Revising <strong>{{ estimation.estimation_number|default:estimation.id }}</strong>. Your changes stay in this
+      browser session until you press <strong>Save Revision</strong>, which snapshots v{{ estimation.version }} and
+      saves the new inputs as v{{ estimation.version|add:1 }} (status DRAFT). There is no autosave while revising.</span>
+  </div>
+{% elif wiz.mode == "draft" %}
+  <div class="alert alert-info wz-banner" role="note">{% icon "edit_note" %}
+    <span>Editing draft <strong>{{ estimation.estimation_number|default:estimation.id }}</strong> in place (same version).
+      Changes are autosaved.</span>
+  </div>
+{% endif %}
+
+<div id="wizard" class="wz" x-data x-init="if (location.pathname + location.search !== '{{ current_url|escapejs }}') history.replaceState(history.state, '', '{{ current_url|escapejs }}')">{% include "estimations/wizard/_body.html" %}</div>
+{% endblock %}

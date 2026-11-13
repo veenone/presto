@@ -1,0 +1,8 @@
+{% extends "web/crud/page.html" %}
+{% load static presto %}
+{% block toolbar_extra %}
+  <button type="button" class="btn btn-flat" hx-get="{{ list_path }}" hx-target="#crud-results" hx-swap="outerHTML"
+          hx-include="#crud-state, #crud-search">
+    {% icon "refresh" %}Refresh
+  </button>
+{% endblock %}

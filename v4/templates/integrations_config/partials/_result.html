@@ -1,0 +1,24 @@
+{% load presto %}
+<div class="alert ic-alert {% if r.ok %}ic-ok{% elif r.status == 'SKIPPED' or r.status == 'PARTIAL' %}ic-warn{% else %}ic-fail{% endif %}" role="status">
+  {% if r.ok %}{% icon "check_circle" %}{% else %}{% icon "error" %}{% endif %}
+  <div class="ic-alert-body">
+    <strong>{% if r.kind == "test" %}{% if r.ok %}Connection OK{% else %}Connection failed{% endif %}{% elif r.kind == "sync" %}{% if r.status %}Sync {{ r.status }}{% else %}Sync not run{% endif %}{% else %}Problem reports{% endif %}</strong>
+    {% if r.kind == "sync" and r.status %}
+      <dl class="ic-counts">
+        <div><dt>Processed</dt><dd class="ed-mono">{{ r.processed }}</dd></div>
+        <div><dt>Created</dt><dd class="ed-mono">{{ r.created }}</dd></div>
+        <div><dt>Updated</dt><dd class="ed-mono">{{ r.updated }}</dd></div>
+        <div><dt>Failed</dt><dd class="ed-mono">{{ r.failed }}</dd></div>
+      </dl>
+      {% if r.errors %}<ul class="ic-errors">{% for e in r.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    {% else %}
+      <span class="ic-alert-msg">{{ r.message }}</span>
+      {% if r.details %}<dl class="ic-details">{% for k, v in r.details %}<div><dt>{{ k }}</dt><dd class="ed-mono">{{ v }}</dd></div>{% endfor %}</dl>{% endif %}
+    {% endif %}
+  </div>
+</div>
+{% if oob %}
+  {% include "integrations_config/partials/_strip.html" %}
+  {% include "integrations_config/partials/_status.html" %}
+  {% include "integrations_config/partials/_lastsync.html" with lastsync_oob=True %}
+{% endif %}

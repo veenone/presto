@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load presto %}
+{% block content %}
+<div class="ic-page">
+  <div class="ed-toolbar">
+    <span class="ed-eyebrow">Integrations</span>
+    <div class="ed-toolbar-grow"></div>
+    {% include "integrations_config/partials/_status.html" %}
+  </div>
+
+  <h1 class="page-title page-title-list">Integrations</h1>
+  <p class="ed-eyebrow ic-lead">Configure external systems used by the estimation pipeline. Each integration has its own credentials and connection settings.</p>
+
+  {% if not can_edit %}
+    <div class="alert alert-info ic-note" role="note">{% icon "lock" %}<span>Read-only view. Only administrators can change integrations, test connections or run a sync; secret values are never shown.</span></div>
+  {% endif %}
+
+  {% include "integrations_config/partials/_strip.html" %}
+
+  <div id="ic-region" class="ic-region">
+    {% include "integrations_config/partials/_region.html" %}
+  </div>
+</div>
+{% endblock %}

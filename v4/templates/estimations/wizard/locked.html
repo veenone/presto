@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load presto %}
+{% block content %}
+<h1 class="page-title">Edit Estimation — {{ estimation.estimation_number|default:estimation.id }} (v{{ estimation.version }})</h1>
+<div class="ed-card wz-locked">
+  <div class="alert alert-warning" role="alert">{% icon "lock" %}
+    <span>Only DRAFT or REVISED estimations can be edited. This estimation is <strong>{{ estimation.status }}</strong>:
+      move it to REVISED from its detail page to start a revision.</span>
+  </div>
+  <a class="btn btn-primary" href="/estimation/{{ estimation.id }}">{% icon "arrow_back" %}Back to Detail</a>
+</div>
+{% endblock %}

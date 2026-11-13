@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load presto %}
+{% block content %}
+<div class="ed-toolbar">
+  {% if can_write and crud.can_add %}
+    <button type="button" class="btn btn-flat btn-primary-text" hx-get="{{ list_path }}/new" hx-target="#modal">
+      {% icon "add" %}Add {{ crud.noun }}
+    </button>
+  {% endif %}
+  {% block toolbar_extra %}{% endblock %}
+  <div class="ed-toolbar-grow"></div>
+  <div class="ed-status-now"><span class="ed-status-dot"></span><span class="ed-mono" id="crud-total">TOTAL · {{ results.total }}</span></div>
+</div>
+
+<h1 class="page-title page-title-list">{{ crud.title }}</h1>
+{% block above_results %}{% endblock %}
+
+<div class="ed-filter-row">
+  <label class="ed-filter-label" for="crud-search">Filter</label>
+  <input id="crud-search" class="input ed-search" type="search" name="q" value="{{ state.q }}"
+         placeholder="{{ crud.search_placeholder }}" autocomplete="off"
+         hx-get="{{ list_path }}" hx-trigger="input changed delay:300ms, search" hx-target="#crud-results"
+         hx-swap="outerHTML" hx-include="#crud-state" hx-replace-url="true">
+  {% block filters_extra %}{% endblock %}
+</div>
+
+{% include crud.results_template %}
+{% endblock %}

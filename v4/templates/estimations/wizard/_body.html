@@ -1,0 +1,51 @@
+{% load presto %}
+<form id="wizard-form" class="wz-form" hx-post="{{ wiz.url }}/step" hx-target="#wizard"
+      hx-swap="innerHTML show:window:top" hx-sync="#wizard:queue all" novalidate
+      x-data @keydown.enter="if ($event.target.tagName === 'INPUT') $event.preventDefault()">
+  {% csrf_token %}
+  <input type="hidden" name="_step" value="{{ step.number }}">
+  <nav class="wz-progress" aria-label="Wizard steps">
+    {% for s in steps %}
+      <button type="submit" name="goto" value="{{ s.number }}"
+              class="wz-progress-step{% if s.number < step.number %} done{% elif s.number == step.number %} active{% endif %}"
+              {% if s.number == step.number %}aria-current="step"{% endif %} title="{{ s.title }}">
+        <span class="wz-progress-num">{% if s.number < step.number %}{% icon "check" %}{% else %}{{ s.number }}{% endif %}</span>
+        <span class="wz-progress-label">{{ s.short }}</span>
+      </button>
+    {% endfor %}
+  </nav>
+
+  <div class="wz-grid">
+    <section class="wz-card" aria-labelledby="wz-step-title">
+      <header class="wz-step-head">
+        <span class="wz-step-icon">{% icon "edit" %}</span>
+        <h2 id="wz-step-title">{{ step.title }}</h2>
+        <span class="ed-mono wz-step-count">STEP {{ step.number }} / {{ last_step }}</span>
+      </header>
+      <p class="wz-intro">{{ step.intro }}</p>
+      {% if step.number == 1 %}{% include "estimations/wizard/_step1.html" %}
+      {% elif step.number == 2 %}{% include "estimations/wizard/_step2.html" %}
+      {% elif step.number == 3 %}{% include "estimations/wizard/_step3.html" %}
+      {% elif step.number == 4 %}{% include "estimations/wizard/_step4.html" %}
+      {% elif step.number == 5 %}{% include "estimations/wizard/_step5.html" %}
+      {% elif step.number == 6 %}{% include "estimations/wizard/_step6.html" %}
+      {% else %}{% include "estimations/wizard/_step7.html" %}{% endif %}
+
+      <footer class="wz-nav">
+        {% if step.number > 1 %}
+          <button type="submit" name="goto" value="{{ step.number|add:-1 }}" class="btn btn-flat">{% icon "arrow_back" %}Back</button>
+        {% endif %}
+        <div class="ed-toolbar-grow"></div>
+        {% if step.number < last_step %}
+          <button type="submit" name="goto" value="{{ step.number|add:1 }}" class="btn btn-primary">Next{% icon "arrow_forward" %}</button>
+        {% else %}
+          <button type="button" class="btn btn-outline" hx-post="{{ wiz.url }}/preview" hx-target="#wz-preview"
+                  hx-swap="innerHTML">{% icon "calculate" %}Calculate</button>
+          <button type="button" class="btn btn-primary" hx-post="{{ wiz.url }}/save">{% icon "save" %}{{ save_label }}</button>
+        {% endif %}
+      </footer>
+    </section>
+    {% include "estimations/wizard/_rail.html" %}
+  </div>
+</form>
+{% if oob %}<span id="wz-title" class="ed-mono wz-toolbar-title" hx-swap-oob="true">{{ rail.title }}</span>{% endif %}

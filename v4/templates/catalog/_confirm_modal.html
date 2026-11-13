@@ -1,0 +1,17 @@
+{% load presto %}
+<div class="modal-backdrop" data-modal>
+  <div class="modal modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+    <form hx-post="{{ action }}" hx-target="#modal">
+      {% csrf_token %}
+      <div class="modal-head"><h2 class="modal-title" id="modal-title">{{ heading }}</h2></div>
+      <div class="modal-body">
+        {% if error %}<div class="alert" role="alert">{% icon "error" %}<span>{{ error }}</span></div>{% endif %}
+        <p id="modal-desc">{{ text }}</p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-flat" data-close-modal>Cancel</button>
+        <button type="submit" class="btn btn-primary">{% icon icon %}{{ verb }}</button>
+      </div>
+    </form>
+  </div>
+</div>

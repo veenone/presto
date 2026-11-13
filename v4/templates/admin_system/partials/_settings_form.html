@@ -1,0 +1,27 @@
+{% load presto %}
+<form id="settings-form" class="st-form" method="post" action="{% url 'settings_save' %}" novalidate
+      hx-post="{% url 'settings_save' %}" hx-target="this" hx-swap="outerHTML"
+      @input="mark($event)" @change="mark($event)">
+  {% csrf_token %}
+  {% if error_count %}
+    <div class="alert st-note" role="alert">{% icon "error" %}<span>Nothing was saved: fix the {{ error_count }} highlighted field{{ error_count|pluralize }} and save again.</span></div>
+  {% endif %}
+  <fieldset class="st-fieldset"{% if not can_edit %} disabled{% endif %}>
+    <legend class="sr-only">Configuration</legend>
+    {% for s in sections %}
+      <details class="st-section{% if s.has_error %} has-error{% endif %}"{% if s.has_error %} open{% endif %}>
+        <summary class="st-summary">
+          {% icon s.icon "st-section-icon" %}
+          <span class="st-section-name">{{ s.name }}</span>
+          {% if s.has_error %}<span class="badge st-badge-error">error</span>{% endif %}
+          <span class="st-count ed-mono">{{ s.fields|length }}</span>
+          {% icon "expand_more" "st-chevron" %}
+        </summary>
+        <div class="st-body">
+          {% if s.help %}<p class="field-help st-section-help">{{ s.help }}</p>{% endif %}
+          {% for f in s.fields %}{% include "admin_system/partials/_setting_field.html" %}{% endfor %}
+        </div>
+      </details>
+    {% endfor %}
+  </fieldset>
+</form>

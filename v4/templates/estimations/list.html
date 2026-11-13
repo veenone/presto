@@ -1,0 +1,7 @@
+{% extends "web/crud/page.html" %}
+{% load presto %}
+{% block toolbar_extra %}
+  {% if can_create %}
+    <a class="btn btn-flat btn-primary-text" href="/estimation/new">{% icon "add" %}New Estimation</a>
+  {% endif %}
+{% endblock %}

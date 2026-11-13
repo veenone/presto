@@ -1,0 +1,68 @@
+{% load presto %}
+<div class="ed-card">
+  <div class="ed-card-head">
+    <span class="ed-cap">PR Fix Summary</span>
+    <span class="ed-card-head-meta">{{ pr.total }} PRs · {{ pr.hours|floatformat:"1" }}h</span>
+  </div>
+  {% if pr.total or pr.details %}
+    <div class="est-pr-grid">
+      {% for t in pr.tiles %}
+        <div class="est-pr-tile">
+          <div class="ed-eyebrow">{{ t.label }}</div>
+          <div class="est-pr-tile-num">{{ t.count }}</div>
+          <div class="est-pr-tile-x">× {{ t.rate|floatformat:"g" }}h = <strong>{{ t.hours|floatformat:"g" }}h</strong></div>
+        </div>
+      {% endfor %}
+      {% if pr.no_test %}
+        <div class="est-pr-tile">
+          <div class="ed-eyebrow">Test Creation</div>
+          <div class="est-pr-tile-num">{{ pr.no_test }}</div>
+          <div class="est-pr-tile-x">PR{{ pr.no_test|pluralize }} without tests × {{ pr.no_test_rate|floatformat:"g" }}h = <strong>{{ pr.no_test_hours|floatformat:"g" }}h</strong></div>
+        </div>
+      {% endif %}
+      <div class="est-pr-tile total">
+        <div class="ed-eyebrow">Total PR Hours</div>
+        <div class="est-pr-tile-num">{{ pr.hours|floatformat:"1" }}<span class="est-strip-unit">h</span></div>
+      </div>
+    </div>
+  {% else %}
+    <div class="ed-empty">No PR fixes</div>
+  {% endif %}
+</div>
+
+{% if pr.details %}
+<div class="ed-card ed-card-table">
+  <div class="ed-card-head est-card-head-pad">
+    <span class="ed-cap">PR Details</span>
+    <span class="ed-card-head-meta">{{ pr.details|length }} listed{% if pr.no_test %} · {{ pr.no_test }} without tests{% endif %}</span>
+  </div>
+  <div class="table-scroll">
+    <table class="data-table est-pr-table">
+      <thead><tr>
+        <th scope="col">PR #</th><th scope="col">Link</th><th scope="col">Description</th><th scope="col">Priority</th>
+        <th scope="col">Complexity</th><th scope="col">Status</th><th scope="col" class="align-center">Test Available</th>
+      </tr></thead>
+      <tbody>
+        {% for p in pr.details %}
+        <tr>
+          <td class="est-nowrap"><strong>{{ p.pr_number }}</strong></td>
+          <td class="kind-text est-pr-link">{% if p.link %}<a href="{{ p.link }}" target="_blank" rel="noopener noreferrer">{{ p.link }}</a>{% elif p.raw_link %}{{ p.raw_link }}{% else %}<span class="muted">—</span>{% endif %}</td>
+          <td class="kind-text est-pr-desc">
+            {% if p.description %}
+              <details>
+                <summary>{{ p.summary|default:"Description" }}</summary>
+                <div class="est-md">{{ p.description }}</div>
+              </details>
+            {% else %}<span class="muted">—</span>{% endif %}
+          </td>
+          <td class="kind-text">{{ p.priority|default:"—" }}</td>
+          <td class="kind-text">{{ p.complexity|capfirst }}</td>
+          <td class="kind-text">{{ p.status|default:"—" }}</td>
+          <td class="align-center">{% if p.test_available %}<span class="badge est-yes">Yes</span>{% else %}<span class="badge est-no">No</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}

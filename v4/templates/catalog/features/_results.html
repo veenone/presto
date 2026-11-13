@@ -1,0 +1,20 @@
+{% extends "web/crud/_results.html" %}
+{% load presto %}
+{% block row_actions %}
+  {% if row.can_promote %}
+    <button type="button" class="btn-round sm tone-positive" title="Promote to catalog" aria-label="Promote feature {{ row.id }} to the catalog"
+            hx-get="{{ list_path }}/{{ row.id }}/promote" hx-target="#modal">{% icon "upgrade" %}</button>
+  {% endif %}
+  {% if row.can_request %}
+    <button type="button" class="btn-round sm" title="Request promotion" aria-label="Request promotion of feature {{ row.id }}"
+            hx-get="{{ list_path }}/{{ row.id }}/request-promotion" hx-target="#modal">{% icon "outgoing_mail" %}</button>
+  {% endif %}
+  {% if row.can_edit %}
+    <button type="button" class="btn-round sm tone-primary" title="Edit" aria-label="Edit Feature {{ row.id }}"
+            hx-get="{{ list_path }}/{{ row.id }}/edit" hx-target="#modal">{% icon "edit" %}</button>
+  {% endif %}
+  {% if row.can_delete %}
+    <button type="button" class="btn-round sm tone-negative" title="Delete" aria-label="Delete Feature {{ row.id }}"
+            hx-get="{{ list_path }}/{{ row.id }}/delete" hx-target="#modal">{% icon "delete" %}</button>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,36 @@
+{% load static presto %}<!doctype html>
+<html lang="en" data-theme-server="{{ user_theme }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% if page_title %}{{ page_title }} · {% endif %}PRESTO{% endblock %}</title>
+  <script>
+    /* Theme before first paint: saved user choice, then this browser, then the OS, then dark. */
+    (function () {
+      var d = document.documentElement, t = d.dataset.themeServer;
+      if (t !== "light" && t !== "dark") { try { t = localStorage.getItem("presto-theme"); } catch (e) { t = null; } }
+      if (t !== "light" && t !== "dark") {
+        t = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      }
+      d.dataset.theme = t;
+    })();
+  </script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% page_stylesheets %}
+  <style>
+    :root[data-theme="light"] { {% for name, value in theme_vars.light.items %}{{ name }}: {{ value }}; {% endfor %} }
+    :root[data-theme="dark"] { {% for name, value in theme_vars.dark.items %}{{ name }}: {{ value }}; {% endfor %} }
+  </style>
+  <script defer src="{% static 'vendor/htmx-2.0.4.min.js' %}"></script>
+  <script defer src="{% static 'js/app.js' %}"></script>
+  <script defer src="{% static 'vendor/alpine-3.14.9.min.js' %}"></script>
+  {% block head %}{% endblock %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' data-auth="{{ user.is_authenticated|yesno:'1,0' }}"
+      class="{% block body_class %}{% endblock %}">
+{% comment %}htmx history snapshots only #page: the Alpine-rendered toast list stays outside, so
+restoring a snapshot (browser Back) never revives toast nodes Alpine no longer manages.{% endcomment %}
+<div id="page" hx-history-elt>{% block body %}{% endblock %}</div>
+{% include "partials/_toasts.html" %}
+</body>
+</html>

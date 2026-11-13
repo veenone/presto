@@ -1,0 +1,16 @@
+{% load presto %}
+<div id="ic-strip" class="ed-strip ic-strip"{% if oob %} hx-swap-oob="true"{% endif %}>
+  {% for c in cells %}
+    <a class="ed-strip-cell ic-strip-cell" href="{% url 'integrations' %}?tab={{ c.system }}"
+       hx-get="{% url 'integrations_tab' c.system %}" hx-target="#ic-region" hx-swap="innerHTML"
+       hx-push-url="{% url 'integrations' %}?tab={{ c.system }}">
+      <span class="ic-strip-name">{% icon c.icon %}<span class="ed-eyebrow">{{ c.system }}</span></span>
+      {% if c.enabled %}<span class="badge ic-badge-on">ON</span>{% else %}<span class="badge ic-badge-off">OFF</span>{% endif %}
+      {% if c.last_sync_at %}
+        <span class="ed-stat-tile-sub" title="{{ c.last_sync_at|date:'Y-m-d H:i:s' }}">Synced {{ c.last_sync_at|timesince }} ago</span>
+      {% else %}
+        <span class="ed-stat-tile-sub">Never synced</span>
+      {% endif %}
+    </a>
+  {% endfor %}
+</div>

@@ -1,0 +1,60 @@
+{% load presto %}
+{# Import requests from Redmine / Jira (same service as POST /api/integrations/{system}/sync). #}
+<div class="modal-backdrop" data-modal>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="modal-title">Import Requests</h2>
+      <button type="button" class="btn-round sm" data-close-modal aria-label="Close">{% icon "close" %}</button>
+    </div>
+    <div class="modal-body">
+      <p class="inb-help">Pull new and updated issues into the inbox. Issues no longer found upstream are marked as deleted.</p>
+
+      {% if failure %}
+        <div class="alert" role="alert" data-testid="sync-failure">{% icon "error" %}<span>{{ failure }}</span></div>
+      {% elif result %}
+        {% if not_configured %}
+          <div class="alert alert-warning" role="alert" data-testid="sync-not-configured">{% icon "warning" %}
+            <span>{{ label }} is not configured or not enabled.{% if can_configure %} Set it up on the <a href="/integrations">Integrations</a> page.{% endif %}</span>
+          </div>
+        {% else %}
+          <div class="inb-sync-result" data-testid="sync-result">
+            <div class="inb-sync-head">
+              <span class="ed-cap">{{ label }} import</span>
+              <span class="badge inb-badge inb-sync-{{ status }}">{{ status }}</span>
+            </div>
+            <dl class="inb-sync-counts">
+              <div><dt>Processed</dt><dd>{{ result.items_processed }}</dd></div>
+              <div><dt>Created</dt><dd>{{ result.items_created }}</dd></div>
+              <div><dt>Updated</dt><dd>{{ result.items_updated }}</dd></div>
+              <div><dt>Failed</dt><dd>{{ result.items_failed }}</dd></div>
+            </dl>
+            {% if result.errors %}
+              <ul class="inb-sync-errors">{% for e in result.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endif %}
+
+      <ul class="inb-sync-systems">
+        {% for s in systems %}
+          <li class="inb-sync-system">
+            <div>
+              <div class="inb-sync-name">{{ s.label }}</div>
+              <div class="inb-sync-meta">
+                {% if s.enabled %}Enabled{% else %}Not configured{% endif %}
+                {% if s.last_sync_at %} · last sync {{ s.last_sync_at|date:"Y-m-d H:i" }}{% endif %}
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline btn-dense" hx-post="/requests/sync/{{ s.name|lower }}"
+                    hx-target="#modal" hx-disabled-elt="this" data-testid="sync-{{ s.name|lower }}">
+              {% icon "sync" %}Sync {{ s.label }}
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-flat" data-close-modal>Close</button>
+    </div>
+  </div>
+</div>
